@@ -1,0 +1,34 @@
+---
+title: "Cardiovascular_Diseases_Risk_Prediction"
+output: html_document
+date: "2023-10-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Import Data
+```{R}
+df = read.csv('CVD.csv')
+```
+# Data Summary
+
+```{R}
+summary(df)
+```
+```{R}
+# Check for missing values
+missing_values <- colSums(is.na(df))
+print(missing_values)
+
+```
+
+```{R}
+summary(df$age)
+table(df$gender)
+table(df$smoking_status)
+```
+
+
+
+
