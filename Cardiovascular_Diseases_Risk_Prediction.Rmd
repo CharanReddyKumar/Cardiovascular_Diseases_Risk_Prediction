@@ -56,6 +56,7 @@ FriedPotato_Consumption
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(skimr)
 ```
 
 # Import Data
@@ -67,14 +68,7 @@ df = read.csv('CVD.csv')
 # Data Summary
 
 ```{R}
-summary(df)
-```
-# Missing values
-```{R}
-# Check for missing values
-missing_values <- colSums(is.na(df))
-print(missing_values)
-
+skim(df)
 ```
 # Data type correction
 ```{R}
@@ -84,6 +78,9 @@ str(df)
 
 #  'Sex' to a factor
 df$Sex <- factor(df$Sex)
+
+df$General_Health <- factor(df$General_Health)
+df$Checkup <- factor(df$Checkup)
 
 #  'Age_Category' to a factor
 df$Age_Category <- factor(df$Age_Category)
@@ -112,48 +109,104 @@ df$Diabetes <- factor(df$Diabetes)
 #  'Diabetes' to a factor
 df$Exercise <- factor(df$Exercise)
 
+```
 # Structure of the data after factorizing the variables
-str(df)
-
+```{r structure of the data}
+summary(df)
 ```
 
-# Frequency count 
-
-```{R}
-# Frequency count 
-categorical_variables <- c("Heart_Disease", "Skin_Cancer", "Other_Cancer","Arthritis", "Sex", "Age_Category" )
-for (var in categorical_variables) {
-  cat_counts <- table(df[[var]])
-  print(cat_counts)
-}
-
-```
 # Distribution of numeric variables
 ```{R}
 # Visualization of data distribution
-numeric_variables <- c("Height_.cm.", "Weight_.kg.", "BMI", "Fruit_Consumption", "Green_Vegetables_Consumption", "FriedPotato_Consumption","Alcohol_Consumption")
-for (var in numeric_variables) {
-  p <- ggplot(df, aes(x = .data[[var]])) +
-    geom_histogram() +
-    labs(title = paste("Distribution of", var))
-  print(p)
+numerical_features <- c('Height_.cm.', 'Weight_.kg.', 'BMI', 
+                        'Alcohol_Consumption', 'Fruit_Consumption', 
+                        'Green_Vegetables_Consumption', 'FriedPotato_Consumption')
+
+# Loop through the numerical features and create histograms with density plots
+for (feature in numerical_features) {
+  # Create a ggplot object for each feature
+  plot <- ggplot(df, aes_string(x = feature)) +
+    geom_histogram(binwidth = 1, fill = "blue", color = "black") +  # Create a histogram
+    geom_density(aes(y = after_stat(count))) +
+    ggtitle(paste("Distribution of", feature)) +
+    xlab(feature) + ylab("Count") +
+    theme_minimal()  # Minimal theme
+    
+  # Display the plot
+  print(plot)
 }
+
 ```
+
+
+Interpretation Of Results:
+Height_.cm.: The height of the patients seems to be following normal distribution with majority of patients having heights around 160 to 180cm.
+
+Weight_.kg.: The weight of the patients also appears to be following normal distribution, with patients having weights approximately between 60kg to 100kg.
+
+BMI : The distribution of Body Mass Index is somewhat right-skewed. A large number of patients have a BMI between 20 and 30, which falls within the normal to overweight range. However, there are also a significant number of patients with a BMI in the obese range (>30).
+
+Alcohol_Consumption : This feature is heavily right skewed. Most patients have very low alcohol consumption, but there are few patients with high alcohol consumption as well.
+
+Fruit_Consumption : This feature also seems to be right skewed. A lot of patients consume fruits regularly, but a significant number consume them less regularly.
+
+Green_Vegetables_Consumption : This feature appears to be following normal distribution with most patients consuming green vegetables regularly.
+
+FriedPotato_Consumption : This feature seems to be right skewed. Many patients consume fried potatos less frequently, while few consume them more often.
+
 
 ```{R}
-# distribution of health-related issues
-health_issues <- c("Heart_Disease", "Skin_Cancer", "Other_Cancer", "Arthritis")
-for (issue in health_issues) {
-  issue_counts <- table(df[[issue]])
-  print(issue_counts)
-  # bar chart for each health issue
- p <- ggplot(df, aes(x = .data[[issue]])) +
-    geom_bar() +
-    labs(title = paste("Distribution of", issue))
-  print(p)
+# Define the list of categorical features
+categorical_features <- c('General_Health', 'Checkup', 'Exercise', 'Heart_Disease', 
+                          'Skin_Cancer', 'Other_Cancer', 'Depression', 'Diabetes', 
+                          'Arthritis', 'Sex', 'Age_Category', 'Smoking_History')
+
+# Loop through the categorical features and create count plots
+for (feature in categorical_features) {
+  # Create a ggplot object for each feature
+  plot <- ggplot(df, aes_string(x = feature)) +
+    geom_bar() +  # Create a bar plot
+    ggtitle(paste("Count of", feature)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + # Rotate x-axis labels
+    geom_text(stat='count', aes(label=scales::percent(..count../sum(..count..))), 
+              vjust=1.6, color="black", size=3)
+  # Display the plot
+  print(plot)
 }
 
 ```
+
+
+# Interprettation of Results:
+
+General_Health : Most patients describe their general health as "Very Good", with "Good" being the second most response. Few patients rate their health as "Fair" and "Poor"
+
+Checkup : Majority of the patients did checkup with in the past year. Fewer patients had their last checkup 2 years ago or more than 5 years ago.
+
+Exercise : Most patients do exercises regularly compared to those who do not.
+
+Heart_Disease : A significant majority of patients do not have any heart disease, only a small proportion of patients have heart disease.
+
+Skin_Cancer : Vast majority of patients do not have skin cancer.
+
+Other_Cancer : Similar to skin cancer, vast majority of patients do not have any kind of cancer.
+
+Depression : Most patients do not have any depression, however small proportion of patients do report having depression.
+
+Diabetes: Most patients do not have diabetes, which is similar to the disease-related features mentioned above. However, diabetes affects a small percentage of the population.
+
+Arthritis: While the majority of patients do not have arthritis, a significant number do.
+
+Sex: The dataset contains slightly more female patients than male patients.
+
+Age_Category: Patients from a wide range of ages are included in the dataset. The age group 50-54 has the most patients, followed by the 55-59 and 60-64 age groups.
+
+Smoking_History: The vast majority of patients have never smoked.
+
+
+
+
+
 # Health issue - Smoking history
 ```{R}
 
