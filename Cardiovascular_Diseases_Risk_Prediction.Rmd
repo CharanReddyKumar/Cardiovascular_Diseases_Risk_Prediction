@@ -355,3 +355,60 @@ for (var in categorical_variables) {
 ### My Notes: If p value < 0.5 it indicates that both variables are significantly related
 ### All values are less than 0 and shows that all are significantly related (Should check the code r is it completly fine)
 ```
+
+# Hypothesis Testing:
+
+1.
+a. People with smoking history have the same BMI as those without smoking history
+
+Statement a: People with smoking history have the same BMI as those without smoking history.
+
+Hypothesis:
+Null Hypothesis (H0): The mean BMI of people with a smoking history is equal to the mean BMI of those without a smoking history. (mean1 = mean2)
+
+Alternative Hypothesis (H1): The mean BMI of people with a smoking history is different from the mean BMI of those without a smoking history. (mean1 != mean2)
+
+```{R}
+# Statement a: Hypothesis testing for BMI and smoking
+smoke_df <- df[df$Smoking_History == "Yes", "BMI"]
+no_smoke_df <- df[df$Smoking_History == "No", "BMI"]
+
+# Perform a two-sample t-test
+t_test_result_smoke <- t.test(smoke_df, no_smoke_df)
+print(t_test_result_smoke)
+```
+# Observations 
+**1. A very small p-value (e.g., p-value < 0.05) indicates strong evidence against the null hypothesis. ** 
+
+**2. Rejecting Null hypothesis**
+
+1.
+
+b. Female BMI is less than or equal to male BMI
+
+Statement b: Female BMI is less than or equal to male BMI.
+
+Hypothesis:
+Null Hypothesis (H0): The mean BMI of females is less than or equal to the mean BMI of males. (mean female ≤ mean male)
+
+Alternative Hypothesis (H1): The mean BMI of females is greater than the mean BMI of males. (mean female > mean male)
+
+```{R}
+# Statement b: Hypothesis testing for BMI and sex
+female_df <- df[df$Sex == "Female", "BMI"]
+male_df <- df[df$Sex == "Male", "BMI"]
+
+# Perform a one-sided t-test
+t_test_result <- t.test(female_df, male_df, alternative = "greater")
+print(t_test_result)
+```
+# Observations.
+
+**1. Failed to reject Null Hypothesis since p value is almost equal to 1**
+
+
+
+
+
+
+
