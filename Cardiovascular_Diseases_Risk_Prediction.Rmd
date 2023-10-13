@@ -377,7 +377,7 @@ no_smoke_df <- df[df$Smoking_History == "No", "BMI"]
 t_test_result_smoke <- t.test(smoke_df, no_smoke_df)
 print(t_test_result_smoke)
 ```
-# Observations 
+## Observations 
 **1. A very small p-value (e.g., p-value < 0.05) indicates strong evidence against the null hypothesis. ** 
 
 **2. Rejecting Null hypothesis**
@@ -402,10 +402,63 @@ male_df <- df[df$Sex == "Male", "BMI"]
 t_test_result <- t.test(female_df, male_df, alternative = "greater")
 print(t_test_result)
 ```
-# Observations.
+## Observations.
 
 **1. Failed to reject Null Hypothesis since p value is almost equal to 1**
 
+# Multivariate Analysis
+
+```{R}
+df_yes <- subset(df, Heart_Disease == "Yes")
+df_no <- subset(df, Heart_Disease == "No")
+
+top_1000_df_yes <- head(df_yes, 1000)
+top_1000_df_no <- head(df_no, 1000)
+merged_df <- rbind(top_1000_df_yes, top_1000_df_no)
+
+```
+
+```{R}
+ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
+  geom_point() +
+  labs(title = "scatterplot of weight vs bmi colored by heart disease",
+       x = "weight",
+       y = "bmi") +
+  theme_minimal()
+```
+
+## Observations.
+
+**1. Most of the people without heart disease are lying towards the lower end of the plot, which also states that people with heavy weights and heavy body mass index seems to get affected more by heart disease. **
+
+# Scatter plot for weight vs alcohol consumption coloured by Heart Disease
+
+![Image](multivariate_analysis_plots/weight_alcohol_vs_heart.png)
+## Observations
+
+**1. Can't find significant patterns but People with alocohol consumption 0 shows no signs of heart disease**
+
+**2. Majority of people suffering with heart disease falls under alcohol consumption level of 15-30 and also people with heavy weights. **
+
+# Scatter plot for depression and Smoking history vs Heart Disease.
+
+![Image](multivariate_analysis_plots/depression_smoking_vs_heart_disease.png)
+
+## Observations.
+
+**1. Person with No Smoking history and No Depression shows no signs of Heart Disease **
+
+**2. Among Smoking History and Depression, Smoking History seems to have more impact on a Person's heart, because as seen in the plot, People with Smoking history and without depression are having heart diseases more than people without smoking history and with depression**
+
+# Scatter plot for sex and Smoking history vs Heart Disease.
+
+![Image](multivariate_analysis_plots/sex_smoking_history_vs_heart_disease.png)
+
+## Observations.
+
+**1. Most of the people with heart disease are falling under person identified as Male with Smoking History**
+
+**2. Hardly fewer or no observations for person identified as Female without Smoking History, but there are  a few data points falling under a Male without smoking history.**
 
 
 
@@ -415,7 +468,7 @@ print(t_test_result)
 library(plotly)
 library(corrplot)
 
-ds <- read.csv("CVD_cleaned.csv")
+ds <- read.csv("CVD.csv")
 convert_age_category <- function(category) {
   if (grepl("-", category)) {
     range <- as.numeric(strsplit(category, "-")[[1]])
