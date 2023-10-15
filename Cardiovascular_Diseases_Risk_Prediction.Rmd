@@ -80,6 +80,7 @@ str(df)
 df$Sex <- factor(df$Sex)
 
 df$General_Health <- factor(df$General_Health)
+
 df$Checkup <- factor(df$Checkup)
 
 #  'Age_Category' to a factor
@@ -110,8 +111,13 @@ df$Diabetes <- factor(df$Diabetes)
 df$Exercise <- factor(df$Exercise)
 
 ```
-# Structure of the data after factorizing the variables
+# Checking for duplicate values and summarizing after removing them
 ```{r structure of the data}
+dfDuplicate <- sum(duplicated(df))
+cat("There were ", dfDuplicate," Duplicate Values", "\n")
+
+df <- unique(df)
+
 summary(df)
 ```
 
@@ -207,20 +213,13 @@ Smoking_History: The vast majority of patients have never smoked.
 
 
 
-# Health issue - Smoking history
+# Heart Disease Vs Smoking history
 ```{R}
 
-# Viz Health issues and Smoking History
-health_issues <- c("Heart_Disease", "Skin_Cancer", "Other_Cancer", "Arthritis")
-for (issue in health_issues) {
-
-  p = ggplot(df, aes(x = issue , fill = Smoking_History)) +
-  geom_bar(position = "fill") 
-    
-  print(p)
-
-}
-
+# Viz Heart Disease and Smoking History
+ggplot(df, aes(x = Smoking_History, fill = Heart_Disease)) +
+  geom_bar(position = "fill") +
+  labs(title = "Smoking history vs. Heart_Disease")
 
 ```
 # Age_Category vs. Heart_Disease
@@ -297,16 +296,7 @@ ggplot(df, aes(x = BMI, fill = Heart_Disease)) +
   scale_fill_manual(values = c("No" = "blue", "Yes" = "red"))
 
 ```
-# Heart_Disease vs. Smoking_History (Faceted)
-```{R}
-# Faceted bar plot of Heart_Disease vs. Smoking_History and Sex
-ggplot(df, aes(x = Smoking_History, fill = Heart_Disease)) +
-  geom_bar(position = "fill") +
-  facet_grid(Sex ~ .) +
-  labs(title = "Heart_Disease vs. Smoking_History (Faceted)", x = "Smoking_History", y = "Proportion") +
-  scale_fill_manual(values = c("No" = "blue", "Yes" = "red"))
 
-```
 ```{R}
 # Explore Relationships (e.g., Heart_Disease vs. Lifestyle Factors)
 health_issues <- c("Heart_Disease", "Skin_Cancer", "Other_Cancer", "Arthritis")
@@ -322,9 +312,9 @@ for (issue in health_issues) {
 }
 ```
 ```{R}
-# Box Plots for numeric variables vs. Heart_Disease
+# Box Plots for Height and Weight vs. Heart_Disease
 boxplot_data <- df %>%
-  select(Heart_Disease, Height_.cm., Weight_.kg., BMI, Fruit_Consumption, Green_Vegetables_Consumption, FriedPotato_Consumption, Alcohol_Consumption)
+  select(Heart_Disease, Height_.cm., Weight_.kg.)
 
 boxplot_data_long <- boxplot_data %>%
   pivot_longer(cols = -Heart_Disease, names_to = "Variable", values_to = "Value")
@@ -332,7 +322,7 @@ boxplot_data_long <- boxplot_data %>%
 p <- ggplot(boxplot_data_long, aes(x = Heart_Disease, y = Value, fill = Heart_Disease)) +
   geom_boxplot() +
   facet_wrap(~Variable, scales = "free_y") +
-  labs(title = "Numeric Variables vs. Heart_Disease")
+  labs(title = "Height and Weight vs. Heart_Disease")
 
 print(p)
 
@@ -358,53 +348,79 @@ for (var in categorical_variables) {
 
 # Hypothesis Testing:
 
-1.
-a. People with smoking history have the same BMI as those without smoking history
+**1.Objective: To test whether there is a significant difference in the mean "Fruit_Consumption" between individuals with and without heart disease.**
 
-Statement a: People with smoking history have the same BMI as those without smoking history.
+**Hypothesis:**
+**Null Hypothesis (H0): There is no significant difference in "Fruit_Consumption" between individuals with and without heart disease.**
 
-Hypothesis:
-Null Hypothesis (H0): The mean BMI of people with a smoking history is equal to the mean BMI of those without a smoking history. (mean1 = mean2)
+**Alternative Hypothesis (H1): There is a significant difference in "Fruit_Consumption" between individuals with and without heart disease.**
 
-Alternative Hypothesis (H1): The mean BMI of people with a smoking history is different from the mean BMI of those without a smoking history. (mean1 != mean2)
+```{R fruit}
 
-```{R}
-# Statement a: Hypothesis testing for BMI and smoking
-smoke_df <- df[df$Smoking_History == "Yes", "BMI"]
-no_smoke_df <- df[df$Smoking_History == "No", "BMI"]
-
-# Perform a two-sample t-test
-t_test_result_smoke <- t.test(smoke_df, no_smoke_df)
-print(t_test_result_smoke)
-```
-## Observations 
-**1. A very small p-value (e.g., p-value < 0.05) indicates strong evidence against the null hypothesis. ** 
-
-**2. Rejecting Null hypothesis**
-
-1.
-
-b. Female BMI is less than or equal to male BMI
-
-Statement b: Female BMI is less than or equal to male BMI.
-
-Hypothesis:
-Null Hypothesis (H0): The mean BMI of females is less than or equal to the mean BMI of males. (mean female ≤ mean male)
-
-Alternative Hypothesis (H1): The mean BMI of females is greater than the mean BMI of males. (mean female > mean male)
-
-```{R}
-# Statement b: Hypothesis testing for BMI and sex
-female_df <- df[df$Sex == "Female", "BMI"]
-male_df <- df[df$Sex == "Male", "BMI"]
-
-# Perform a one-sided t-test
-t_test_result <- t.test(female_df, male_df, alternative = "greater")
+t_test_result <- t.test(Fruit_Consumption ~ Heart_Disease, data = df)
 print(t_test_result)
 ```
-## Observations.
 
-**1. Failed to reject Null Hypothesis since p value is almost equal to 1**
+#Observations 
+* The t-test results show that there is a significant difference in "Fruit_Consumption" between people with and without heart disease.
+* The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0).
+* The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis.
+Individuals without heart disease consume more fruit than those with heart disease.
+
+
+**2.Objective: To test whether there is a significant difference in the mean "Alcohol_Consumption" between individuals with and without heart disease.**
+
+**Null Hypothesis (H0): There is no significant difference in "Alcohol_Consumption" between individuals with and without heart disease.**
+
+**Alternative Hypothesis (Ha): There is a significant difference in "Alcohol_Consumption" between individuals with and without heart disease.**
+
+```{R alcohol}
+t_test_result2 <- t.test(Alcohol_Consumption ~ Heart_Disease, data = df)
+print(t_test_result2)
+```
+**Conclusion: **
+* The t-Test results show a significant difference in "Alcohol_Consumption" between people with and without heart disease.
+* The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0).
+* The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis.
+Individuals without heart disease consume more alcohol on average than those with heart disease.
+
+
+**3.Objective: To test whether there is a significant difference in the mean "Green_Vegetables_Consumption" between individuals with and without heart disease.**
+
+**Null Hypothesis (H0): There is no significant difference in "Green_Vegetables_Consumption" between individuals with and without heart disease.**
+
+**Alternative Hypothesis (Ha): There is a significant difference in "Green_Vegetables_Consumption" between individuals with and without heart disease.**
+
+```{R vegetable}
+t_test_result3 <- t.test(Green_Vegetables_Consumption ~ Heart_Disease, data = df)
+print(t_test_result3)
+```
+
+**Conclusion: **
+
+* The results of the t-Test indicate a significant difference in "Green_Vegetables_Consumption" between individuals with and without heart disease.
+* The extremely small p-value suggests strong evidence to reject the null hypothesis (H0).
+The 95% confidence interval, which does not include 0, further supports the rejection of the null hypothesis.
+* On average, individuals without heart disease consume more green vegetables compared to those with heart disease.
+
+
+**4.Objective: To test whether there is a significant difference in the mean "FriedPotato_Consumption" between individuals with and without heart disease.**
+
+**Null Hypothesis (H0): There is no significant difference in "FriedPotato_Consumption" between individuals with and without heart disease.**
+
+**Alternative Hypothesis (Ha): There is a significant difference in "FriedPotato_Consumption" between individuals with and without heart disease.**
+
+```{R FriedPotato_Consumption}
+t_test_result5 <- t.test(FriedPotato_Consumption ~ Heart_Disease, data = df)
+print(t_test_result5)
+```
+
+**Conclusion:**
+* The results t-Test indicate a significant difference in "FriedPotato_Consumption" between individuals with and without heart disease.
+* The small p-value (2e-07) suggests strong evidence to reject the null hypothesis (H0).
+* The 95% confidence interval, which does not include 0, further supports the rejection of the null hypothesis.
+* On average, individuals without heart disease consume slightly more fried potatoes compared to those with heart disease.
+
 
 # Multivariate Analysis
 
