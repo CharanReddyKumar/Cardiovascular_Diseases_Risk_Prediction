@@ -69,6 +69,7 @@ df = read.csv('CVD.csv')
 
 ```{R}
 skim(df)
+summary(df)
 ```
 # Data type correction
 ```{R}
@@ -108,6 +109,9 @@ df$Diabetes <- factor(df$Diabetes)
 
 #  'Diabetes' to a factor
 df$Exercise <- factor(df$Exercise)
+
+str(df)
+
 
 ```
 # Structure of the data after factorizing the variables
@@ -497,6 +501,29 @@ plot_3d
 
 
 ```
+```{R}
+
+variables_to_analyze <- c("Height_.cm.", "Weight_.kg.", "BMI", "Fruit_Consumption", "Green_Vegetables_Consumption", "FriedPotato_Consumption", "Alcohol_Consumption")
+
+
+anova_results <- list()
+
+for (var in variables_to_analyze) {
+  anova_result <- aov(reformulate("Heart_Disease", response = var), data = df)
+  
+  anova_results[[var]] <- anova_result
+}
+
+# Print 
+for (var in variables_to_analyze) {
+  cat("ANOVA Test for", var, "\n")
+  print(summary(anova_results[[var]]))
+}
+
+
+```
+
+
 
 
 
