@@ -135,7 +135,8 @@ for (feature in numerical_features) {
 
 ```
 
-Interpretation Of Results: Height\_.cm.: The height of the patients seems to be following normal distribution with majority of patients having heights around 160 to 180cm.
+**Interpretation Of Results:** 
+Height\_.cm.: The height of the patients seems to be following normal distribution with majority of patients having heights around 160 to 180cm.
 
 Weight\_.kg.: The weight of the patients also appears to be following normal distribution, with patients having weights approximately between 60kg to 100kg.
 
@@ -170,7 +171,7 @@ for (feature in categorical_features) {
 
 ```
 
-## Interprettation of Results:
+**Interprettation of Results:**
 
 General_Health : Most patients describe their general health as "Very Good", with "Good" being the second most response. Few patients rate their health as "Fair" and "Poor"
 
@@ -195,6 +196,7 @@ Sex: We have good data set with almost equal distribution in Sex with Males of 4
 Age_Category: Patients from a wide range of ages are included in the data set. The age group 65 to 69 has the most patients, followed by the 60 to 64.
 
 Smoking_History: 41% of the people in our data set had history of smoking history and 59% of the peopple did not have an history of smoking. (NOTE: this is with people with smoking history and not current smokers, so we dont know if they were chain smokers or just casual smokers)
+Even in checkup 77.5% of the respondents have reported that, they did checkup within the past year, which is a very interesting fact to consider in this dataset.
 
 # Bivariate Analysis:
 ## Heart Disease Vs Smoking history
@@ -330,7 +332,9 @@ p <- ggplot(boxplot_data_long, aes(x = Heart_Disease, y = Value, fill = Heart_Di
 print(p)
 
 ```
+
 In the above box plots we could not observe any major relationship between heart disease with height or weight
+
 # Hypothesis Testing
 ## chi-squared test 
 
@@ -365,8 +369,8 @@ for (var in categorical_variables) {
 t_test_result <- t.test(Fruit_Consumption ~ Heart_Disease, data = df)
 print(t_test_result)
 ```
-
-#Observations \* The t-test results show that there is a significant difference in "Fruit_Consumption" between people with and without heart disease. \* The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0). \* The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis. Individuals without heart disease consume more fruit than those with heart disease.
+**Observations** 
+The t-test results show that there is a significant difference in "Fruit_Consumption" between people with and without heart disease. The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0). The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis. Individuals without heart disease consume more fruit than those with heart disease.
 
 **2.Objective: To test whether there is a significant difference in the mean "Alcohol_Consumption" between individuals with and without heart disease.**
 
