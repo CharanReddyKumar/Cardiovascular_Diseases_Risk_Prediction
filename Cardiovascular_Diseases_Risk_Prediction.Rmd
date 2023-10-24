@@ -54,7 +54,8 @@ library(skimr)
 df = read.csv('CVD.csv')
 ```
 
-# Data Summary
+# Data pre-processing
+## Data Summary
 Below is the summary of the dataframe using skim function of skimr library. And we can see that there are 0 missing values in the dataset, couple of unique values throughout all the features. Mean, Median, SD, 0th, 25th,50th,75th,100th percentile is given for all the 7 numerical variable along with a small display of histogram.
 ```{R}
 skim(df)
@@ -100,7 +101,7 @@ df$Exercise <- factor(df$Exercise)
 str(df)
 ```
 
-# Checking for duplicate values and summarizing after removing them
+## Checking for duplicate values and summarizing after removing them
 After careful observation, we found 80 duplicate values in the dataset, which have been removed using unique function in R.
 ```{r structure of the data}
 dfDuplicate <- sum(duplicated(df))
@@ -109,7 +110,8 @@ cat("There were ", dfDuplicate," Duplicate Values", "\n")
 df <- unique(df)
 ```
 
-# Distribution of numeric variables
+#Univariate Analysis
+## Distribution of numeric variables
 
 ```{R}
 # Visualization of data distribution
@@ -121,7 +123,7 @@ numerical_features <- c('Height_.cm.', 'Weight_.kg.', 'BMI',
 for (feature in numerical_features) {
   # Create a ggplot object for each feature
   plot <- ggplot(df, aes_string(x = feature)) +
-    geom_histogram(binwidth = 1, fill = "blue", color = "black") +  # Create a histogram
+    geom_histogram(binwidth = 1, fill = "blue", color = "black") +  # Create a histogram  
     geom_density(aes(y = after_stat(count))) +
     ggtitle(paste("Distribution of", feature)) +
     xlab(feature) + ylab("Count") +
@@ -168,33 +170,34 @@ for (feature in categorical_features) {
 
 ```
 
-# Interprettation of Results:
+## Interprettation of Results:
 
 General_Health : Most patients describe their general health as "Very Good", with "Good" being the second most response. Few patients rate their health as "Fair" and "Poor"
 
 Checkup : Majority of the patients did checkup with in the past year. Fewer patients had their last checkup 2 years ago or more than 5 years ago.
 
-Exercise : Most patients do exercises regularly compared to those who do not.
+Exercise : 78% of the population from our data set do exercise regulartly
 
-Heart_Disease : A significant majority of patients do not have any heart disease, only a small proportion of patients have heart disease.
+Heart_Disease : 92% of the population in our data set do not have Heart Disease
 
-Skin_Cancer : Vast majority of patients do not have skin cancer.
+Skin_Cancer : Vast majority of patients do not have skin cancer that's 90% of our population.
 
 Other_Cancer : Similar to skin cancer, vast majority of patients do not have any kind of cancer.
 
-Depression : Most patients do not have any depression, however small proportion of patients do report having depression.
+Depression : Most patients do not have any depression, however small proportion of patients do report having depression thats around 20% of our data set population.
 
 Diabetes: Most patients do not have diabetes, which is similar to the disease-related features mentioned above. However, diabetes affects a small percentage of the population.
 
-Arthritis: While the majority of patients do not have arthritis, a significant number do.
+Arthritis: While the majority of patients do not have arthritis that's 67% of our data set, a significant number do.
 
-Sex: The dataset contains slightly more female patients than male patients.
+Sex: We have good data set with almost equal distribution in Sex with Males of 48.1% and Females of 51.9%.
 
-Age_Category: Patients from a wide range of ages are included in the dataset. The age group 50-54 has the most patients, followed by the 55-59 and 60-64 age groups.
+Age_Category: Patients from a wide range of ages are included in the data set. The age group 65 to 69 has the most patients, followed by the 60 to 64.
 
-Smoking_History: The vast majority of patients have never smoked.
+Smoking_History: 41% of the people in our data set had history of smoking history and 59% of the peopple did not have an history of smoking. (NOTE: this is with people with smoking history and not current smokers, so we dont know if they were chain smokers or just casual smokers)
 
-# Heart Disease Vs Smoking history
+# Bivariate Analysis:
+## Heart Disease Vs Smoking history
 
 ```{R}
 
@@ -204,8 +207,10 @@ ggplot(df, aes(x = Smoking_History, fill = Heart_Disease)) +
   labs(title = "Smoking history vs. Heart_Disease")
 
 ```
+The graph above shows a clear correlation between smoking history and heart disease as we can observe that compared to people who have not smoked with people with smoking history have heart disease also not a major percentage of the people with smoking history have heart disease. People who have a history of smoking are significantly more likely to have heart disease than those who do not have a history of smoking. This is because smoking damages the heart and blood vessels, making them more susceptible to disease.
 
-# Age_Category vs. Heart_Disease
+
+## Age_Category vs. Heart_Disease
 
 ```{R}
 ggplot(df, aes(x = Age_Category, fill = Heart_Disease)) +
@@ -213,8 +218,9 @@ ggplot(df, aes(x = Age_Category, fill = Heart_Disease)) +
   labs(title = "Age_Category vs. Heart_Disease")
 
 ```
+The graph shows the percentage of people who have heart disease by age category. The percentage of people who have heart disease is higher in the older age categories than in the younger age categories. This is likely due to a number of other health related factors.
 
-# Other_Cancer vs. Heart_Disease
+## Other_Cancer vs. Heart_Disease
 
 ```{R}
 ggplot(df, aes(x = Other_Cancer, fill = Heart_Disease)) +
@@ -222,23 +228,29 @@ ggplot(df, aes(x = Other_Cancer, fill = Heart_Disease)) +
   labs(title = "Other_Cancer vs. Heart_Disease")
 ```
 
-# Sex vs. Heart_Disease
+ The graph shows that the percentage of people who have had other cancers have slight more perctatage of people with heart disease compared to people with people who did not have other cancers, we can not be sure that there is any relation between them but at the same time we can not tell that they do have.
+
+
+
+## Sex vs. Heart_Disease
 
 ```{R}
 ggplot(df, aes(x = Sex, fill = Heart_Disease)) +
   geom_bar(position = "fill") +
   labs(title = "Sex vs. Heart_Disease")
 ```
+From the graph we can observe that Males have a slightly higher percentage of people with heart disease compared to Females even here we can not conclude that there is a relationship between sex and heart disease, so we should check with others methods for corelation between them.
 
-# Skin_Cancer vs. Heart_Disease
+## Skin_Cancer vs. Heart_Disease
 
 ```{R}
 ggplot(df, aes(x = Skin_Cancer, fill = Heart_Disease)) +
   geom_bar(position = "fill") +
   labs(title = "Skin_Cancer vs. Heart_Disease")
-```
+```   
+Same like other cancers we can see that there similar distribution even with Skin cancer we can see that percentage of people with heart disease and 
 
-# Alcohol Consumption vs. Heart Disease
+## Alcohol Consumption vs. Heart Disease
 
 ```{R}
 ggplot(df, aes(x = (Heart_Disease), y = Alcohol_Consumption, fill = Heart_Disease)) +
@@ -247,7 +259,7 @@ ggplot(df, aes(x = (Heart_Disease), y = Alcohol_Consumption, fill = Heart_Diseas
   ylab("Alcohol Consumption")
 ```
 
-# BMI vs. Heart Disease
+## BMI vs. Heart Disease
 
 ```{R}
 ggplot(df, aes(x = Heart_Disease, y = BMI, fill = Heart_Disease)) +
@@ -256,25 +268,29 @@ ggplot(df, aes(x = Heart_Disease, y = BMI, fill = Heart_Disease)) +
   ylab("BMI")
 ```
 
-# Fried Potato Consumption vs. Heart Disease
+## Fried Potato Consumption vs. Heart Disease
 
 ```{R}
 ggplot(df, aes(x = Heart_Disease, y = FriedPotato_Consumption, fill = Heart_Disease)) +
   geom_boxplot() +
   labs(title = "Fried Potato Consumption vs. Heart Disease") +
   ylab("Fried Potato Consumption")
+
 ```
+We can see almost same percenatge of people who consume fried potatos who have heart disease and who do not hace, but this is surpsrising beacsue fried potato is one the main causes for heart diseases lets observe this relationship later in our analysis and also we can see a lot of out liers but we are not removing these as we are not sure if they are actual outliers.
 
-# Fruit Consumption vs. Heart Disease
-
+## Fruit Consumption vs. Heart Disease
 ```{R}
+
 ggplot(df, aes(x = factor(Heart_Disease), y = Fruit_Consumption, fill = Heart_Disease)) +
   geom_boxplot() +
   labs(title = "Fruit Consumption vs. Heart Disease") +
   ylab("Fruit Consumption")
-```
 
-# BMI - Heart Disease
+```
+ We can observe in the above graph again a similar trend like Fried Potato Consumption vs. Heart Disease, almost equal distribution with people who have heart diseases and who do not have any heart diseases with resoect to fruit consumption.
+
+## BMI - Heart Disease
 
 ```{r}
 ggplot(df, aes(x = BMI, fill = Heart_Disease)) +
@@ -295,20 +311,8 @@ ggplot(df, aes(x = BMI, fill = Heart_Disease)) +
 
 ```
 
-```{R}
-# Explore Relationships (e.g., Heart_Disease vs. Lifestyle Factors)
-health_issues <- c("Heart_Disease", "Skin_Cancer", "Other_Cancer", "Arthritis")
-Life_Styles <- c("Exercise", "Sex", "Age_Category", "Height_.cm.", "Weight_.kg.", "BMI", "Smoking_History", "Alcohol_Consumption", "Fruit_Consumption", "Green_Vegetables_Consumption", "FriedPotato_Consumption")
 
-for (issue in health_issues) {
-  for (style in Life_Styles){
-    p <- ggplot(df, aes(x = .data[[issue]], fill = .data[[style]])) +
-      geom_bar(position = "fill") +
-      labs(title = paste(issue, "vs.", style))
-    print(p)
-  }
-}
-```
+## Box plot for heaight and weight vs heart diseases
 
 ```{R}
 # Box Plots for Height and Weight vs. Heart_Disease
@@ -326,8 +330,9 @@ p <- ggplot(boxplot_data_long, aes(x = Heart_Disease, y = Value, fill = Heart_Di
 print(p)
 
 ```
-
-# chi-squared test between Heart_Disease and Smoking_History
+In the above box plots we could not observe any major relationship between heart disease with height or weight
+# Hypothesis Testing
+## chi-squared test 
 
 ```{R}
 
@@ -347,7 +352,7 @@ for (var in categorical_variables) {
 ### All values are less than 0 and shows that all are significantly related (Should check the code r is it completly fine)
 ```
 
-# Hypothesis Testing:
+
 
 **1.Objective: To test whether there is a significant difference in the mean "Fruit_Consumption" between individuals with and without heart disease.**
 
