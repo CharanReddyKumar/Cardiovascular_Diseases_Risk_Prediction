@@ -1,5 +1,13 @@
 # Project Proposal
 
+# Team 4
+
+Team Members:
+- Charan Reddy Kumar G24201832
+- Parameshwar Manjunath Bhat G22026431
+- Sailesh Baabu Suresh Babu G33048785
+- Prudhvi Ram Mannuru G43959726
+
 ## Project Title
 Predictive Modeling for Health-Related Risk Assessment
 
