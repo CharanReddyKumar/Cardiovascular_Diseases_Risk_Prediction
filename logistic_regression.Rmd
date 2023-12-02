@@ -18,3 +18,27 @@ df$Sex <- factor(df$Sex, levels = c("Female", "Male"))
 df$Age_Category <- as.factor(df$Age_Category)
 df$Smoking_History <- factor(df$Smoking_History, levels = c("No", "Yes"))
 ```
+
+```{R}
+# Split the data into training and testing sets
+set.seed(42)  # for reproducibility
+train_indices <- sample(1:nrow(df), 0.8 * nrow(df))
+train_data <- df[train_indices, ]
+test_data <- df[-train_indices, ]
+
+# Create a logistic regression model
+logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
+
+# Summary of the model
+summary(logistic_model)
+
+# Make predictions on the test set
+predictions <- predict(logistic_model, newdata = test_data, type = "response")
+
+# Convert predicted probabilities to binary predictions
+predicted_classes <- ifelse(predictions > 0.5, "Yes", "No")
+confusion_matrix <- table(predicted_classes, test_data$Heart_Disease)
+cat("Confusion Matrix:\n", confusion_matrix, "\n")
+
+#print(predicted_classes)
+```
