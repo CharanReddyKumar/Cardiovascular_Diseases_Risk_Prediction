@@ -42,3 +42,19 @@ cat("Confusion Matrix:\n", confusion_matrix, "\n")
 
 #print(predicted_classes)
 ```
+
+```{R}
+# Evaluate the performance
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+precision <- confusion_matrix[2, 2] / sum(confusion_matrix[, 2])
+recall <- confusion_matrix[2, 2] / sum(confusion_matrix[2, ])
+f1_score <- 2 * precision * recall / (precision + recall)
+
+# Print the evaluation metrics
+cat("Accuracy:", accuracy, "\n")
+cat("Precision:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("F1 Score:", f1_score, "\n")
+
+```
+```
