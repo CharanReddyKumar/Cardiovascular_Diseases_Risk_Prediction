@@ -1,0 +1,60 @@
+```{R}
+df = read.csv('CVD.csv')
+```
+
+```{R}
+# Convert categorical variables to factors
+df$General_Health <- factor(df$General_Health, levels = c("Poor", "Fair", "Good", "Very Good", "Excellent"))
+df$Checkup <- factor(df$Checkup, levels = c("Within the past 2 years", "Within the past year", "Within the past 5 years", "5 or more years ago", "Never"))
+df$Exercise <- factor(df$Exercise, levels = c("No", "Yes"))
+df$Heart_Disease <- factor(df$Heart_Disease, levels = c("No", "Yes"))
+df$Skin_Cancer <- factor(df$Skin_Cancer, levels = c("No", "Yes"))
+df$Other_Cancer <- factor(df$Other_Cancer, levels = c("No", "Yes"))
+df$Depression <- factor(df$Depression, levels = c("No", "Yes"))
+df$Diabetes <- factor(df$Diabetes, levels = c("No", "Yes"))
+df$Arthritis <- factor(df$Arthritis, levels = c("No", "Yes"))
+df$Sex <- factor(df$Sex, levels = c("Female", "Male"))
+#df$Age_Category <- factor(df$Age_Category, levels = c("70-74", "75-79", "80+"))
+df$Age_Category <- as.factor(df$Age_Category)
+df$Smoking_History <- factor(df$Smoking_History, levels = c("No", "Yes"))
+```
+
+```{R}
+# Split the data into training and testing sets
+set.seed(42)  # for reproducibility
+train_indices <- sample(1:nrow(df), 0.8 * nrow(df))
+train_data <- df[train_indices, ]
+test_data <- df[-train_indices, ]
+
+# Create a logistic regression model
+logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
+
+# Summary of the model
+summary(logistic_model)
+
+# Make predictions on the test set
+predictions <- predict(logistic_model, newdata = test_data, type = "response")
+
+# Convert predicted probabilities to binary predictions
+predicted_classes <- ifelse(predictions > 0.5, "Yes", "No")
+confusion_matrix <- table(predicted_classes, test_data$Heart_Disease)
+cat("Confusion Matrix:\n", confusion_matrix, "\n")
+
+#print(predicted_classes)
+```
+
+```{R}
+# Evaluate the performance
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+precision <- confusion_matrix[2, 2] / sum(confusion_matrix[, 2])
+recall <- confusion_matrix[2, 2] / sum(confusion_matrix[2, ])
+f1_score <- 2 * precision * recall / (precision + recall)
+
+# Print the evaluation metrics
+cat("Accuracy:", accuracy, "\n")
+cat("Precision:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("F1 Score:", f1_score, "\n")
+
+```
+```
