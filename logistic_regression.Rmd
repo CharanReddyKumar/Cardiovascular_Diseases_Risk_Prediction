@@ -85,3 +85,29 @@ cat("Recall:", recall, "\n")
 cat("F1 Score:", f1_score, "\n")
 
 ```
+
+# Upsampling since this is a class imbalance dataset
+
+```{R}
+X <- data[, c("Exercise", "Skin_Cancer", "Other_Cancer", "Depression", "Arthritis", "Smoking_History", "Checkup", "General_Health", "Sex", "Age_Category", "Diabetes")]
+y <- data$Heart_Disease
+```
+
+```{R}
+ros_obj <- ROSE(Heart_Disease ~ ., data = data, seed = 42, p = 0.5, N = length(y))
+```
+
+```{R}
+data_resampled <- ROSE(formula = Heart_Disease ~ ., data = data, N = length(y), p = 0.5, seed = 42)
+set.seed(42)
+resampled_data <- data_resampled$data
+split_index <- createDataPartition(resampled_data$Heart_Disease, p = 0.7, list = FALSE)
+train_data <- resampled_data[split_index, ]
+test_data <- resampled_data[-split_index, ]
+```
+
+```{R}
+logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
+y_pred_prob <- predict(logistic_model, newdata = test_data, type = "response")
+y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
+```
