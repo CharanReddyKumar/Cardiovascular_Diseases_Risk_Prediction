@@ -111,3 +111,27 @@ logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
 y_pred_prob <- predict(logistic_model, newdata = test_data, type = "response")
 y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
 ```
+
+```{R}
+# Evaluating the model
+accuracy <- sum(y_pred == test_data$Heart_Disease) / length(test_data$Heart_Disease)
+conf_matrix <- table(Actual = test_data$Heart_Disease, Predicted = y_pred)
+classification_rep <- summary(roc(test_data$Heart_Disease, y_pred_prob))
+
+print(paste("Accuracy:", round(accuracy, 2)))
+print("Confusion Matrix:")
+print(conf_matrix)
+print("Classification Report:")
+print(classification_rep)
+
+# Calculating precision, recall, and F1 score
+tp <- sum(test_data$Heart_Disease == 1 & y_pred == 1)
+fp <- sum(test_data$Heart_Disease == 0 & y_pred == 1)
+fn <- sum(test_data$Heart_Disease == 1 & y_pred == 0)
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+print(paste("Precision:", round(precision, 2)))
+print(paste("Recall:", round(recall, 2)))
+print(paste("F1 Score:", round(f1_score, 2)))
+```
