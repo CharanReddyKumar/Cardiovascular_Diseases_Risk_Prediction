@@ -125,11 +125,12 @@ dtest <- xgb.DMatrix(data = as.matrix(testData_xgb[-which(names(testData_xgb) ==
 # Define XGBoost parameters
 params <- list(
   objective = "binary:logistic",
-  eval_metric = "auc",
+  scale_pos_weight = scale_pos_weight,
   max_depth = 6,
-  eta = 0.3,
+  min_child_weight = 1,
   subsample = 0.8,
-  colsample_bytree = 0.8
+  colsample_bytree = 0.8,
+  eta = 0.3
 )
 
 # Train the XGBoost model
