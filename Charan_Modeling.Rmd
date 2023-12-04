@@ -21,6 +21,8 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(skimr)
+library(xgboost)
+
 ```
 ```{R}
 df = read.csv('CVD.csv')
@@ -130,7 +132,19 @@ dtest <- xgb.DMatrix(data = as.matrix(testData_xgb[-which(names(testData_xgb) ==
 
 
 
-# Define XGBoost parameters
+# Calculate the ratio for the scale_pos_weight parameter
+# Assuming 'Heart_Disease' is your target variable and 1 represents the minority class
+negative_cases <- sum(trainData_xgb$Heart_Disease == 0)
+positive_cases <- sum(trainData_xgb$Heart_Disease == 1)
+
+# Avoid division by zero in case there are no positive cases
+if (positive_cases == 0) {
+  stop("No positive cases found in the training data.")
+}
+
+scale_pos_weight <- negative_cases / positive_cases
+
+# Now define your XGBoost parameters including scale_pos_weight
 params <- list(
   objective = "binary:logistic",
   scale_pos_weight = scale_pos_weight,
@@ -140,6 +154,7 @@ params <- list(
   colsample_bytree = 0.8,
   eta = 0.3
 )
+
 
 # Train the XGBoost model
 xgb_model <- xgb.train(
