@@ -152,4 +152,13 @@ confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeri
 
 
 ```
+Interpretation:
+Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.
 
+Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.
+
+High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.
+
+Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.
+
+Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.
