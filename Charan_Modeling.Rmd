@@ -63,26 +63,24 @@ str(df)
 
 ```
 ```{R}
-# Make sure 'Heart_Disease' is a factor for classification
-df$Heart_Disease <- as.factor(df$Heart_Disease)
 
-# Split the data into training and testing sets
+# Selecting specific variables
+selected_vars <- c('Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 
+                   'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 
+                   'FriedPotato_Consumption', 'Heart_Disease')
+df_selected <- df[selected_vars]
+
+
+# Splitting data into training and testing sets
 set.seed(123)
-split <- createDataPartition(df$Heart_Disease, p = 0.8, list = FALSE)
-trainData <- df[split, ]
-testData <- df[-split, ]
+split <- createDataPartition(df_selected$Heart_Disease, p = 0.8, list = FALSE)
+trainData <- df_selected[split, ]
+testData <- df_selected[-split, ]
+
 ```
 
 ```{R}
-# Define fitControl
-fitControl <- trainControl(
-  method = "cv",          # Use cross-validation
-  number = 10,            # Number of folds in the cross-validation
-  classProbs = TRUE,      # Compute class probabilities, needed for some models
-  summaryFunction = twoClassSummary # Summary function for binary classification
-)
-
-# Train a Naive Bayes model
+# Naive Bayes model training with selected variables
 nbModel <- train(
   Heart_Disease ~ ., 
   data = trainData, 
@@ -90,11 +88,67 @@ nbModel <- train(
   trControl = fitControl
 )
 
-# Predictions with the Naive Bayes model
+# Predictions and Evaluation
 nbPredictions <- predict(nbModel, newdata = testData)
-
-# Evaluate the Naive Bayes model
 confusionMatrix(nbPredictions, testData$Heart_Disease)
+
+
+```
+
+```{R}
+
+library(caret)
+# Assuming df is your original dataframe
+
+# Apply one-hot encoding for XGBoost
+dummies <- dummyVars(" ~ .", data = df)
+df_xgb <- predict(dummies, newdata = df)
+df_xgb <- as.data.frame(df_xgb)
+
+# Ensure 'Heart_Disease' remains as numeric
+df_xgb$Heart_Disease <- as.numeric(df$Heart_Disease) - 1
+
+# Splitting data into training and testing sets for XGBoost
+split_xgb <- createDataPartition(df_xgb$Heart_Disease, p = 0.8, list = FALSE)
+trainData_xgb <- df_xgb[split_xgb, ]
+testData_xgb <- df_xgb[-split_xgb, ]
+
+# Prepare DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(trainData_xgb[-which(names(trainData_xgb) == "Heart_Disease")]), 
+                      label = trainData_xgb$Heart_Disease)
+dtest <- xgb.DMatrix(data = as.matrix(testData_xgb[-which(names(testData_xgb) == "Heart_Disease")]), 
+                     label = testData_xgb$Heart_Disease)
+
+
+
+
+# Define XGBoost parameters
+params <- list(
+  objective = "binary:logistic",
+  eval_metric = "auc",
+  max_depth = 6,
+  eta = 0.3,
+  subsample = 0.8,
+  colsample_bytree = 0.8
+)
+
+# Train the XGBoost model
+xgb_model <- xgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 100,
+  watchlist = list(eval = dtest, train = dtrain),
+  early_stopping_rounds = 10
+)
+
+# Predict on test data
+xgb_predictions <- predict(xgb_model, dtest)
+xgb_predicted_labels <- ifelse(xgb_predictions > 0.5, 1, 0)
+
+# Evaluate model performance
+confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeric(testData$Heart_Disease) - 1, levels = c(0, 1)))
+
+
 
 ```
 
