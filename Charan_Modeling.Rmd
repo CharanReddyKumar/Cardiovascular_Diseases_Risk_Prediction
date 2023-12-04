@@ -1,0 +1,99 @@
+---
+title: "Charan_Model"
+output: html_document
+date: "2023-12-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(tidyverse)
+library(caret)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(skimr)
+```
+```{R}
+df = read.csv('CVD.csv')
+
+#  'Sex' to a factor
+df$Sex <- factor(df$Sex)
+
+df$General_Health <- factor(df$General_Health)
+
+df$Checkup <- factor(df$Checkup)
+
+#  'Age_Category' to a factor
+df$Age_Category <- factor(df$Age_Category)
+
+#  'Smoking_History' to a factor
+df$Smoking_History <- factor(df$Smoking_History)
+
+#  'Heart_Disease' to a factor
+df$Heart_Disease <- factor(df$Heart_Disease)
+
+#  'Skin_Cancer' to a factor
+df$Skin_Cancer <- factor(df$Skin_Cancer)
+
+#  'Other_Cancer' to a factor
+df$Other_Cancer <- factor(df$Other_Cancer)
+
+#  'Arthritis' to a factor
+df$Arthritis <- factor(df$Arthritis)
+
+#  'Depression' to a factor
+df$Depression <- factor(df$Depression)
+
+#  'Diabetes' to a factor
+df$Diabetes <- factor(df$Diabetes)
+
+#  'Diabetes' to a factor
+df$Exercise <- factor(df$Exercise)
+
+str(df)
+
+```
+```{R}
+# Make sure 'Heart_Disease' is a factor for classification
+df$Heart_Disease <- as.factor(df$Heart_Disease)
+
+# Split the data into training and testing sets
+split <- createDataPartition(df$Heart_Disease, p = 0.8, list = FALSE)
+trainData <- df[split, ]
+testData <- df[-split, ]
+```
+
+```{R}
+# Define fitControl
+fitControl <- trainControl(
+  method = "cv",          # Use cross-validation
+  number = 10,            # Number of folds in the cross-validation
+  classProbs = TRUE,      # Compute class probabilities, needed for some models
+  summaryFunction = twoClassSummary # Summary function for binary classification
+)
+
+# Train a Naive Bayes model
+nbModel <- train(
+  Heart_Disease ~ ., 
+  data = trainData, 
+  method = "naive_bayes", 
+  trControl = fitControl
+)
+
+# Predictions with the Naive Bayes model
+nbPredictions <- predict(nbModel, newdata = testData)
+
+# Evaluate the Naive Bayes model
+confusionMatrix(nbPredictions, testData$Heart_Disease)
+
+```
+
