@@ -67,6 +67,7 @@ str(df)
 df$Heart_Disease <- as.factor(df$Heart_Disease)
 
 # Split the data into training and testing sets
+set.seed(123)
 split <- createDataPartition(df$Heart_Disease, p = 0.8, list = FALSE)
 trainData <- df[split, ]
 testData <- df[-split, ]
