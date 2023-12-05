@@ -516,6 +516,9 @@ fitBalanced <- rpart(Heart_Disease ~ ., data = balancedData, method = "class")
 
 # Predict on the test data
 predictionsBalanced <- predict(fitBalanced, testData, type = "class")
+
+# Evaluate the model directly with the predictions
+confusionMatrix(predictionsBalanced, testData$Heart_Disease)
 ```
 
 # Final Conclusions.
