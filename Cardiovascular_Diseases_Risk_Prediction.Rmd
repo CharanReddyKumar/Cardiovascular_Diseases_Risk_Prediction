@@ -513,6 +513,9 @@ balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
 
 # Fit the model on the balanced training data
 fitBalanced <- rpart(Heart_Disease ~ ., data = balancedData, method = "class")
+
+# Predict on the test data
+predictionsBalanced <- predict(fitBalanced, testData, type = "class")
 ```
 
 # Final Conclusions.
