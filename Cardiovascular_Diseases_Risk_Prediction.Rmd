@@ -474,6 +474,13 @@ ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
 
 #Decision Tree Model
 ```{r Decision Tree}
+library(rpart)
+library(rpart.plot)
+
+
+# Assuming 'Heart_Disease' is your target variable
+# Building the decision tree model
+decisionTreeModel <- rpart(Heart_Disease ~ ., data = df, method = "class")
 
 
 ```
