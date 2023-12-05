@@ -506,6 +506,7 @@ predictions <- predict(fit, testData, type = "class")
 # Evaluating the model
 confusionMatrix(predictions, testData$Heart_Disease)
 ```
+**Accuracy achieved: 91%**
 
 ```{r ROSE}
 # Balance the dataset using ROSE
