@@ -496,6 +496,13 @@ set.seed(123)  # For reproducibility
 trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
 trainData <- df[trainIndex,]
 testData <- df[-trainIndex,]
+
+fit <- rpart(Heart_Disease ~ ., data = trainData, method = "class", 
+             control = rpart.control(cp = 0.001, minsplit = 20))
+
+# Predict on the test data
+predictions <- predict(fit, testData, type = "class")
+
 ```
 
 
