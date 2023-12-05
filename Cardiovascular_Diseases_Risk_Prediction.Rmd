@@ -241,6 +241,7 @@ ggplot(df, aes(x = Sex, fill = Heart_Disease)) +
   geom_bar(position = "fill") +
   labs(title = "Sex vs. Heart_Disease")
 ```
+
 From the graph we can observe that Males have a slightly higher percentage of people with heart disease compared to Females even here we can not conclude that there is a relationship between sex and heart disease, so we should check with others methods for corelation between them.
 
 ## Skin_Cancer vs. Heart_Disease
@@ -250,7 +251,8 @@ ggplot(df, aes(x = Skin_Cancer, fill = Heart_Disease)) +
   geom_bar(position = "fill") +
   labs(title = "Skin_Cancer vs. Heart_Disease")
 ```   
-Same like other cancers we can see that there similar distribution even with Skin cancer we can see that percentage of people with heart disease and 
+
+Same like other cancers we can see that there similar distribution even with Skin cancer we can see that percentage of people with heart disease. 
 
 ## Alcohol Consumption vs. Heart Disease
 
@@ -279,6 +281,7 @@ ggplot(df, aes(x = Heart_Disease, y = FriedPotato_Consumption, fill = Heart_Dise
   ylab("Fried Potato Consumption")
 
 ```
+
 We can see almost same percenatge of people who consume fried potatos who have heart disease and who do not hace, but this is surpsrising beacsue fried potato is one the main causes for heart diseases lets observe this relationship later in our analysis and also we can see a lot of out liers but we are not removing these as we are not sure if they are actual outliers.
 
 ## Fruit Consumption vs. Heart Disease
@@ -290,7 +293,8 @@ ggplot(df, aes(x = factor(Heart_Disease), y = Fruit_Consumption, fill = Heart_Di
   ylab("Fruit Consumption")
 
 ```
- We can observe in the above graph again a similar trend like Fried Potato Consumption vs. Heart Disease, almost equal distribution with people who have heart diseases and who do not have any heart diseases with resoect to fruit consumption.
+
+We can observe in the above graph again a similar trend like Fried Potato Consumption vs. Heart Disease, almost equal distribution with people who have heart diseases and who do not have any heart diseases with resoect to fruit consumption.
 
 ## BMI - Heart Disease
 
@@ -333,13 +337,13 @@ print(p)
 
 ```
 
+
 In the above box plots we could not observe any major relationship between heart disease with height or weight
 
-# Hypothesis Testing
-## chi-squared test 
+
+## chi-squared test between Heart Disease and other Variables.
 
 ```{R}
-
 
 # List of categorical variables to be check for relation with Heart_Disease
 categorical_variables <- c("Skin_Cancer", "Other_Cancer", "Depression", "Diabetes", "Arthritis", "Sex", "Age_Category", "Exercise", "Smoking_History","Smoking_History")
@@ -355,8 +359,11 @@ for (var in categorical_variables) {
 ### My Notes: If p value < 0.5 it indicates that both variables are significantly related
 ### All values are less than 0 and shows that all are significantly related (Should check the code r is it completly fine)
 ```
+# chi-squared test Conclusions:
 
+The small p-value (p << 2.2e-16) suggests that there is a statistically significant association between the categorical variables you're testing (such as "Skin_Cancer," "Other_Cancer," etc.) and the presence of heart disease. In practical terms, it implies that these variables may be related to the likelihood of having heart disease.
 
+# Hypothesis Testing
 
 **1.Objective: To test whether there is a significant difference in the mean "Fruit_Consumption" between individuals with and without heart disease.**
 
@@ -369,8 +376,7 @@ for (var in categorical_variables) {
 t_test_result <- t.test(Fruit_Consumption ~ Heart_Disease, data = df)
 print(t_test_result)
 ```
-**Observations** 
-The t-test results show that there is a significant difference in "Fruit_Consumption" between people with and without heart disease. The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0). The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis. Individuals without heart disease consume more fruit than those with heart disease.
+**Conclusion**  \* The t-test results show that there is a significant difference in "Fruit_Consumption" between people with and without heart disease. \* The extremely low p-value indicates that there is strong evidence to reject the null hypothesis (H0). The 95% confidence interval, which excludes zero, adds to the rejection of the null hypothesis. Individuals without heart disease consume more fruit than those with heart disease. \*
 
 **2.Objective: To test whether there is a significant difference in the mean "Alcohol_Consumption" between individuals with and without heart disease.**
 
@@ -427,6 +433,21 @@ merged_df <- rbind(top_1000_df_yes, top_1000_df_no)
 
 ```
 
+# Scatter plot for weight vs alcohol consumption coloured by Heart Disease
+```{R}
+ggplot(merged_df, aes(x = Weight_.kg., y = Alcohol_Consumption, color = Heart_Disease)) +
+  geom_point() +
+  labs(
+    title = "Scatter Plot of Weight vs. Alcohol Consumption",
+    x = "Weight (kg)",
+    y = "Alcohol Consumption",
+    color = "Heart Disease"
+  )
+```
+
+**Conclusions:** \* Can't find significant patterns but People with alocohol consumption 0 shows no signs of heart disease. \* Majority of people suffering with heart disease falls under alcohol consumption level of 15-30 and also people with heavy weights. \*
+
+# Scatter plot for weight vs bmi coloured by Heart Disease
 ```{R}
 ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
   geom_point() +
@@ -436,92 +457,83 @@ ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
   theme_minimal()
 ```
 
-## Observations.
-
-**1. Most of the people without heart disease are lying towards the lower end of the plot, which also states that people with heavy weights and heavy body mass index seems to get affected more by heart disease.**
-
-# Scatter plot for weight vs alcohol consumption coloured by Heart Disease
-
-![Image](multivariate_analysis_plots/weight_alcohol_vs_heart.png) \## Observations
-
-**1. Can't find significant patterns but People with alocohol consumption 0 shows no signs of heart disease**
-
-**2. Majority of people suffering with heart disease falls under alcohol consumption level of 15-30 and also people with heavy weights.**
+**Conclusions:** \* Most of the people without heart disease are lying towards the lower end of the plot, which also states that people with heavy weights and heavy body mass index seems to get affected more by heart disease. \* 
 
 # Scatter plot for depression and Smoking history vs Heart Disease.
 
 ![Image](multivariate_analysis_plots/depression_smoking_vs_heart_disease.png)
 
-## Observations.
 
-**1. Person with No Smoking history and No Depression shows no signs of Heart Disease**
-
-**2. Among Smoking History and Depression, Smoking History seems to have more impact on a Person's heart, because as seen in the plot, People with Smoking history and without depression are having heart diseases more than people without smoking history and with depression**
+**Conclusions:** \* Person with No Smoking history and No Depression shows no signs of Heart Disease. \* Among Smoking History and Depression, Smoking History seems to have more impact on a Person's heart, because as seen in the plot, People with Smoking history and without depression are having heart diseases more than people without smoking history and with depression. \*
 
 # Scatter plot for sex and Smoking history vs Heart Disease.
 
 ![Image](multivariate_analysis_plots/sex_smoking_history_vs_heart_disease.png)
 
-## Observations.
+**Conclusions:** \* Most of the people with heart disease are falling under person identified as Male with Smoking History. \* Hardly fewer or no observations for person identified as Female without Smoking History, but there are a few data points falling under a Male without smoking history. \*
 
-**1. Most of the people with heart disease are falling under person identified as Male with Smoking History**
-
-**2. Hardly fewer or no observations for person identified as Female without Smoking History, but there are a few data points falling under a Male without smoking history.**
-
-```{R}
-# 3D Plot
-
-library(plotly)
-library(corrplot)
-
-ds <- read.csv("CVD.csv")
-convert_age_category <- function(category) {
-  if (grepl("-", category)) {
-    range <- as.numeric(strsplit(category, "-")[[1]])
-    avg <- mean(range)
-  } else {
-    avg <- as.numeric(gsub("[^0-9]", "", category))
-  }
-  return(avg)
-}
-
-ds$Age_Category <- sapply(ds$Age_Category, convert_age_category)
-
-plot_3d <- plot_ly(ds, x = ~BMI, y = ~Age_Category, z = ~Heart_Disease, 
-                   type = "scatter3d", mode = "markers",
-                   marker = list(size = 5, color = 'green', opacity = 0.7))
-
-plot_3d <- plot_3d %>% layout(scene = list(
-  xaxis = list(title = 'BMI', backgroundcolor = "rgb(200, 200, 230)"),
-  yaxis = list(title = 'Age_Category', backgroundcolor = "rgb(230, 200, 230)"),
-  zaxis = list(title = 'Heart_Disease', backgroundcolor = "rgb(200, 230, 200)")
-),
-margin = list(l = 0, r = 0, b = 0, t = 0))
-
-plot_3d
+#Decision Tree Model
+```{r Decision Tree}
+library(rpart)
+library(rpart.plot)
 
 
+# Assuming 'Heart_Disease' is your target variable
+# Building the decision tree model
+decisionTreeModel <- rpart(Heart_Disease ~ ., data = df, method = "class")
 
+# Plot the decision tree
+rpart.plot(decisionTreeModel)
+
+# Optionally, print a summary of the model
+print(decisionTreeModel)
 ```
 
-```{R}
 
-variables_to_analyze <- c("Height_.cm.", "Weight_.kg.", "BMI", "Fruit_Consumption", "Green_Vegetables_Consumption", "FriedPotato_Consumption", "Alcohol_Consumption")
+```{r splitting and training}
+# Splitting the data
+set.seed(123)  # For reproducibility
+trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
+trainData <- df[trainIndex,]
+testData <- df[-trainIndex,]
 
+fit <- rpart(Heart_Disease ~ ., data = trainData, method = "class", 
+             control = rpart.control(cp = 0.001, minsplit = 20))
 
-anova_results <- list()
+# Predict on the test data
+predictions <- predict(fit, testData, type = "class")
 
-for (var in variables_to_analyze) {
-  anova_result <- aov(reformulate("Heart_Disease", response = var), data = df)
-  
-  anova_results[[var]] <- anova_result
-}
-
-# Print 
-for (var in variables_to_analyze) {
-  cat("ANOVA Test for", var, "\n")
-  print(summary(anova_results[[var]]))
-}
-
-
+# Evaluating the model
+confusionMatrix(predictions, testData$Heart_Disease)
 ```
+**Accuracy achieved: 91%**
+
+```{r ROSE}
+# Balance the dataset using ROSE
+balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
+
+# Fit the model on the balanced training data
+fitBalanced <- rpart(Heart_Disease ~ ., data = balancedData, method = "class")
+
+# Predict on the test data
+predictionsBalanced <- predict(fitBalanced, testData, type = "class")
+
+# Evaluate the model directly with the predictions
+confusionMatrix(predictionsBalanced, testData$Heart_Disease)
+```
+**Accuracy acieved:71%**
+
+
+# Final Conclusions.
+
+1. In this work, we presented the EDA on the health dataset to answer our smark question to figure out the relationships between different health variables on Heart Disease and based on the statistical tests and EDA, lifestyle of a person such as age, weight, height, smoking history, alcohol consumption and other features significantly impact the likelihood of developing a heart disease.
+
+## Future Steps:
+
+1. Developing a model to predict the likelihood of developing a heart disease taking all the features into consideration.
+
+# References.
+
+1. Websites:
+
+Detailed Exploratory Data analysis. (2018, May 20). https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python
