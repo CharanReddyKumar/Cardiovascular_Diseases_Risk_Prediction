@@ -490,12 +490,13 @@ print(decisionTreeModel)
 ```
 
 
-
-
-
-
-
-
+```{r splitting and training}
+# Splitting the data
+set.seed(123)  # For reproducibility
+trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
+trainData <- df[trainIndex,]
+testData <- df[-trainIndex,]
+```
 
 
 
