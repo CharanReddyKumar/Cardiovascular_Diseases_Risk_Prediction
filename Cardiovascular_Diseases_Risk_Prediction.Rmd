@@ -503,6 +503,8 @@ fit <- rpart(Heart_Disease ~ ., data = trainData, method = "class",
 # Predict on the test data
 predictions <- predict(fit, testData, type = "class")
 
+# Evaluating the model
+confusionMatrix(predictions, testData$Heart_Disease)
 ```
 
 
