@@ -507,7 +507,11 @@ predictions <- predict(fit, testData, type = "class")
 confusionMatrix(predictions, testData$Heart_Disease)
 ```
 
+```{r ROSE}
+# Balance the dataset using ROSE
+balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
 
+```
 
 # Final Conclusions.
 
