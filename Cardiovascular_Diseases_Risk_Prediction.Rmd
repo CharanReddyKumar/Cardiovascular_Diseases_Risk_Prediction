@@ -479,6 +479,20 @@ ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
 
 **Conclusions:** \* Most of the people with heart disease are falling under person identified as Male with Smoking History. \* Hardly fewer or no observations for person identified as Female without Smoking History, but there are a few data points falling under a Male without smoking history. \*
 
+# Final Conclusions.
+
+1. In this work, we presented the EDA on the health dataset to answer our smark question to figure out the relationships between different health variables on Heart Disease and based on the statistical tests and EDA, lifestyle of a person such as age, weight, height, smoking history, alcohol consumption and other features significantly impact the likelihood of developing a heart disease.
+
+## Future Steps:
+
+1. Developing a model to predict the likelihood of developing a heart disease taking all the features into consideration.
+
+# References.
+
+1. Websites:
+
+Detailed Exploratory Data analysis. (2018, May 20). https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python
+
 #Decision Tree Model
 ```{r Decision Tree}
 library(rpart)
@@ -530,6 +544,7 @@ confusionMatrix(predictionsBalanced, testData$Heart_Disease)
 ```
 **Accuracy acieved:71%**
 
+#XgBoost Model
 ```{R}
 
 # Selecting specific variables
@@ -546,7 +561,7 @@ trainData <- df_selected[split, ]
 testData <- df_selected[-split, ]
 
 ```
-
+**This R script is focused on data preparation for a machine learning model predicting heart disease. Initially, it narrows down the dataset df to select pertinent variables: 'Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 'FriedPotato_Consumption', and 'Heart_Disease'. This refined dataset, df_selected, is then split into training and testing sets, using the createDataPartition function with a set seed for reproducibility. Specifically, 80% of the data is allocated for training (trainData) and the remaining 20% for testing (testData), based on the 'Heart_Disease' variable.**
 ```{R}
 
 library(caret)
@@ -615,27 +630,15 @@ confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeri
 
 
 ```
-Interpretation:
-Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.
+**Interpretation:**
+**Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.**
 
-Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.
+**Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.**
 
-High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.
+**High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.**
 
-Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.
+**Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.**
 
-Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.
+**Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.**
 
-# Final Conclusions.
 
-1. In this work, we presented the EDA on the health dataset to answer our smark question to figure out the relationships between different health variables on Heart Disease and based on the statistical tests and EDA, lifestyle of a person such as age, weight, height, smoking history, alcohol consumption and other features significantly impact the likelihood of developing a heart disease.
-
-## Future Steps:
-
-1. Developing a model to predict the likelihood of developing a heart disease taking all the features into consideration.
-
-# References.
-
-1. Websites:
-
-Detailed Exploratory Data analysis. (2018, May 20). https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python
