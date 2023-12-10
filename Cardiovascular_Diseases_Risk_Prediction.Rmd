@@ -544,6 +544,7 @@ confusionMatrix(predictionsBalanced, testData$Heart_Disease)
 ```
 **Accuracy acieved:71%**
 
+#XgBoost Model
 ```{R}
 
 # Selecting specific variables
