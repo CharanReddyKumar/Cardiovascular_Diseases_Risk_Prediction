@@ -13,8 +13,8 @@ library(caret)
 data = read.csv('CVD.csv')
 ```
 
-```{R}
 # Convert categorical variables to factors
+```{R}
 data$Exercise <- ifelse(data$Exercise == 'No', 0, 1)
 data$Heart_Disease <- ifelse(data$Heart_Disease == 'No', 0, 1)
 data$Skin_Cancer <- ifelse(data$Skin_Cancer == 'No', 0, 1)
@@ -59,21 +59,33 @@ data$Diabetes <- ifelse(data$Diabetes == 'No', 0,
 # Split the data into training and testing sets
 set.seed(42)  # for reproducibility
 train_indices <- sample(1:nrow(data), 0.8 * nrow(data))
-train_data <- data[train_indices, ]
-test_data <- data[-train_indices, ]
+
+train_data_before_upsampling <- data[train_indices, ]
+test_data_before_upsampling <- data[-train_indices, ]
 
 # Create a logistic regression model
-logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
+logistic_model <- glm(Heart_Disease ~ ., data = train_data_before_upsampling, family = binomial)
 
 # Summary of the model
 summary(logistic_model)
 
 # Make predictions on the test set
-predictions <- predict(logistic_model, newdata = test_data, type = "response")
+train_predictions <- predict(logistic_model, newdata = train_data_before_upsampling, type = "response")
+train_predicted_classes <- ifelse(train_predictions > 0.5, 1, 0)
+train_accuracy <- mean(train_predicted_classes == train_data_before_upsampling$Heart_Disease)
+cat("Train Accuracy:", train_accuracy, "\n")
+
+test_predictions <- predict(logistic_model, newdata = test_data_before_upsampling, type = "response")
+test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
+
+test_accuracy <- mean(test_predicted_classes == test_data_before_upsampling$Heart_Disease)
+cat("Test Accuracy:", test_accuracy, "\n")
+
+#predictions <- predict(logistic_model, newdata = test_data, type = "response")
 
 # Convert predicted probabilities to binary predictions
-predicted_classes <- ifelse(predictions > 0.5, "Yes", "No")
-confusion_matrix <- table(predicted_classes, test_data$Heart_Disease)
+#predicted_classes <- ifelse(predictions > 0.5, "Yes", "No")
+confusion_matrix <- table(test_predicted_classes, test_data_before_upsampling$Heart_Disease)
 cat("Confusion Matrix:\n", confusion_matrix, "\n")
 ```
 
@@ -106,36 +118,109 @@ data_resampled <- ROSE(formula = Heart_Disease ~ ., data = data, N = length(y), 
 set.seed(42)
 resampled_data <- data_resampled$data
 split_index <- createDataPartition(resampled_data$Heart_Disease, p = 0.7, list = FALSE)
-train_data <- resampled_data[split_index, ]
-test_data <- resampled_data[-split_index, ]
+train_data_after_upsampling <- resampled_data[split_index, ]
+test_data_after_upsampling <- resampled_data[-split_index, ]
 ```
 
 ```{R}
-logistic_model <- glm(Heart_Disease ~ ., data = train_data, family = binomial)
-y_pred_prob <- predict(logistic_model, newdata = test_data, type = "response")
-y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
+logistic_model <- glm(Heart_Disease ~ ., data = train_data_after_upsampling, family = binomial)
+
+# Make predictions on the test set
+train_predictions <- predict(logistic_model, newdata = train_data_after_upsampling, type = "response")
+train_predicted_classes <- ifelse(train_predictions > 0.5, 1, 0)
+train_accuracy <- mean(train_predicted_classes == train_data_after_upsampling$Heart_Disease)
+cat("Train Accuracy:", train_accuracy, "\n")
+
+test_predictions <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
+test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
+
+test_accuracy <- mean(test_predicted_classes == test_data_after_upsampling$Heart_Disease)
+cat("Test Accuracy:", test_accuracy, "\n")
+
+#y_pred_prob <- predict(logistic_model, newdata = test_data, type = "response")
+#y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
 ```
 
 ```{R}
 # Evaluating the model
-accuracy <- sum(y_pred == test_data$Heart_Disease) / length(test_data$Heart_Disease)
-conf_matrix <- table(Actual = test_data$Heart_Disease, Predicted = y_pred)
-classification_rep <- summary(roc(test_data$Heart_Disease, y_pred_prob))
+accuracy <- sum(test_predicted_classes == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = test_predicted_classes)
+classification_rep <- summary(roc(test_data_after_upsampling$Heart_Disease, test_predictions))
 
 print(paste("Accuracy:", round(accuracy, 2)))
 print("Confusion Matrix:")
 print(conf_matrix)
+
+
+
 print("Classification Report:")
 print(classification_rep)
 
 # Calculating precision, recall, and F1 score
-tp <- sum(test_data$Heart_Disease == 1 & y_pred == 1)
-fp <- sum(test_data$Heart_Disease == 0 & y_pred == 1)
-fn <- sum(test_data$Heart_Disease == 1 & y_pred == 0)
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & test_predicted_classes == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 0)
 precision <- tp / (tp + fp)
 recall <- tp / (tp + fn)
 f1_score <- 2 * (precision * recall) / (precision + recall)
 print(paste("Precision:", round(precision, 2)))
 print(paste("Recall:", round(recall, 2)))
 print(paste("F1 Score:", round(f1_score, 2)))
+```
+
+```{R}
+library(ggplot2)
+
+coefficients <- coef(logistic_model)[-1]
+feature_names <- names(coefficients)
+
+importance_df <- data.frame(
+  Feature = feature_names,
+  Importance = abs(coefficients)
+)
+
+# Convert Importance column to numeric
+importance_df$Importance <- as.numeric(importance_df$Importance)
+
+# Sort the dataframe by importance
+importance_df <- importance_df[order(importance_df$Importance, decreasing = TRUE), ]
+
+ggplot(importance_df, aes(x = Feature, y = Importance)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Logistic Regression Feature Importance") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+# Building model with Statistically significant features.
+```{R}
+logistic_model <- glm(Heart_Disease ~ General_Health + Arthritis + Sex + Age_Category + Smoking_History, data = train_data_after_upsampling, family = binomial)
+
+summary(logistic_model)
+# Making predictions on the test set
+y_pred_prob <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
+y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
+
+# Evaluating the model
+accuracy <- sum(y_pred == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = y_pred)
+classification_rep <- summary(roc(test_data_after_upsampling$Heart_Disease, y_pred_prob))
+
+print(paste("Accuracy:", round(accuracy, 8)))
+print("Confusion Matrix:")
+print(conf_matrix)
+print("Classification Report:")
+print(classification_rep)
+
+# Calculating precision, recall, and F1 score
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & y_pred == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 0)
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+print(paste("Precision:", round(precision, 8)))
+print(paste("Recall:", round(recall, 8)))
+print(paste("F1 Score:", round(f1_score, 8)))
 ```
