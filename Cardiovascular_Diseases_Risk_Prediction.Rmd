@@ -560,7 +560,7 @@ trainData <- df_selected[split, ]
 testData <- df_selected[-split, ]
 
 ```
-
+**This R script is focused on data preparation for a machine learning model predicting heart disease. Initially, it narrows down the dataset df to select pertinent variables: 'Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 'FriedPotato_Consumption', and 'Heart_Disease'. This refined dataset, df_selected, is then split into training and testing sets, using the createDataPartition function with a set seed for reproducibility. Specifically, 80% of the data is allocated for training (trainData) and the remaining 20% for testing (testData), based on the 'Heart_Disease' variable.**
 ```{R}
 
 library(caret)
