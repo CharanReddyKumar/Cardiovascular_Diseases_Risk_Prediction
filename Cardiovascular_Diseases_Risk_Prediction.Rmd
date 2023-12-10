@@ -479,6 +479,20 @@ ggplot(merged_df, aes(x = Weight_.kg., y = BMI, color = Heart_Disease)) +
 
 **Conclusions:** \* Most of the people with heart disease are falling under person identified as Male with Smoking History. \* Hardly fewer or no observations for person identified as Female without Smoking History, but there are a few data points falling under a Male without smoking history. \*
 
+# Final Conclusions.
+
+1. In this work, we presented the EDA on the health dataset to answer our smark question to figure out the relationships between different health variables on Heart Disease and based on the statistical tests and EDA, lifestyle of a person such as age, weight, height, smoking history, alcohol consumption and other features significantly impact the likelihood of developing a heart disease.
+
+## Future Steps:
+
+1. Developing a model to predict the likelihood of developing a heart disease taking all the features into consideration.
+
+# References.
+
+1. Websites:
+
+Detailed Exploratory Data analysis. (2018, May 20). https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python
+
 #Decision Tree Model
 ```{r Decision Tree}
 library(rpart)
@@ -626,16 +640,4 @@ confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeri
 
 **Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.**
 
-# Final Conclusions.
 
-1. In this work, we presented the EDA on the health dataset to answer our smark question to figure out the relationships between different health variables on Heart Disease and based on the statistical tests and EDA, lifestyle of a person such as age, weight, height, smoking history, alcohol consumption and other features significantly impact the likelihood of developing a heart disease.
-
-## Future Steps:
-
-1. Developing a model to predict the likelihood of developing a heart disease taking all the features into consideration.
-
-# References.
-
-1. Websites:
-
-Detailed Exploratory Data analysis. (2018, May 20). https://www.kaggle.com/code/ekami66/detailed-exploratory-data-analysis-with-python
