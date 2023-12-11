@@ -273,3 +273,66 @@ c. Numerical Insights:
 
 Possible Reasons:
 * Feature Streamlining: Focusing on statistically significant features simplified the model, preventing overfitting.
+
+# 6. Hyperparameter Tuning:
+
+```{R}
+X_train <- as.matrix(train_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
+y_train <- train_data_after_upsampling$Heart_Disease
+
+X_test <- as.matrix(test_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
+
+cv_model <- cv.glmnet(
+  x = X_train,
+  y = y_train,
+  alpha = 0.5,
+  family = "binomial",
+  type.measure = "class"
+)
+
+best_lambda <- cv_model$lambda.min
+
+final_model <- glmnet(
+  x = X_train,
+  y = y_train,
+  alpha = 0.5,
+  family = "binomial",
+  lambda = best_lambda
+)
+
+tuned_predictions <- predict(final_model, s = best_lambda, newx = X_test, type = "response")
+tuned_predicted_classes <- ifelse(tuned_predictions > 0.5, 1, 0)
+tuned_accuracy <- sum(tuned_predicted_classes == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & tuned_predicted_classes == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & tuned_predicted_classes == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & tuned_predicted_classes == 0)
+
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = tuned_predicted_classes)
+print(conf_matrix)
+cat("Tuned Model Accuracy :", tuned_accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+Key Observations:
+
+a. In the pursuit of optimizing the logistic regression model, hyperparameter tuning was conducted.
+
+b. This involved fine-tuning parameters to achieve an optimal balance between bias and variance. The process aimed to enhance the model's generalizability and performance on unseen data.
+
+c. Outcomes:
+
+* Fine-tuned Model: The hyperparameter-tuned model aimed to strike an optimal balance between underfitting and overfitting.
+
+c. Numerical Insights:
+
+* Accuracy: The tuned model achieved an accuracy of 0.73.
+* Precision: The precision was 0.71, indicating robust positive predictions.
+* Recall: The recall was 0.75, suggesting effective identification of positive cases.
+* F1 Score: The F1 score, a harmonic mean of precision and recall, was 0.73.
+
+d. Possible Reasons:
+* Optimized Parameters: Fine-tuning addresses model complexity, potentially improving performance on unseen data.
