@@ -559,3 +559,60 @@ confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeri
 **Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.**
 
 **Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.**
+
+
+
+```{r}
+
+library(randomForest)
+library(pROC)
+your_data<- read.csv("CVD.csv")
+
+set.seed(123)
+
+selected_data <- your_data[, c('Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 
+                               'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 
+                               'FriedPotato_Consumption', 'Heart_Disease')]
+
+# Convert categorical variables to factors if needed
+selected_data$Sex <- as.factor(selected_data$Sex)
+selected_data$Age_Category <- as.factor(selected_data$Age_Category)
+selected_data$Smoking_History <- as.factor(selected_data$Smoking_History)
+selected_data$Heart_Disease <- as.factor(selected_data$Heart_Disease)
+
+# Split the data into training and testing sets
+set_sample <- sample(1:nrow(selected_data), 0.7 * nrow(selected_data))
+train_data <- selected_data[set_sample, ]
+test_data <- selected_data[-set_sample, ]
+
+# Build the random forest model
+rf_model <- randomForest(Heart_Disease ~ ., data = train_data, ntree = 100)
+
+# Make predictions on the test set
+predictions <- predict(rf_model, newdata = test_data)
+
+# Confusion matrix
+conf_matrix <- table(predictions, test_data$Heart_Disease)
+print(conf_matrix)
+
+# Calculate accuracy, sensitivity, specificity, etc.
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+sensitivity <- conf_matrix[2, 2] / sum(conf_matrix[2, ])
+specificity <- conf_matrix[1, 1] / sum(conf_matrix[1, ])
+positive_predictive_value <- conf_matrix[2, 2] / sum(conf_matrix[, 2])
+negative_predictive_value <- conf_matrix[1, 1] / sum(conf_matrix[, 1])
+
+precision <- conf_matrix[2, 2] / sum(conf_matrix[, 2])
+recall <- conf_matrix[2, 2] / sum(conf_matrix[2, ])
+f1_score <- 2 * precision * recall / (precision + recall)
+
+cat("Precision: ", precision, "\n")
+cat("Recall: ", recall, "\n")
+cat("F1 Score: ", f1_score, "\n")
+cat("Accuracy: ", accuracy, "\n")
+cat("Sensitivity: ", sensitivity, "\n")
+cat("Specificity: ", specificity, "\n")
+cat("Positive Predictive Value: ", positive_predictive_value, "\n")
+cat("Negative Predictive Value: ", negative_predictive_value, "\n")
+
+```
