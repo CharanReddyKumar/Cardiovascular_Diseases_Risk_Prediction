@@ -336,3 +336,7 @@ c. Numerical Insights:
 
 d. Possible Reasons:
 * Optimized Parameters: Fine-tuning addresses model complexity, potentially improving performance on unseen data.
+
+# 7. Conclusions from Logistic Regression:
+
+The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial model showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
