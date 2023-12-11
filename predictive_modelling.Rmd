@@ -167,7 +167,7 @@ f1_score <- 2 * (precision * recall) / (precision + recall)
 cat("Accuracy :", test_accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
 ```
 
-# 3.1 Logistic Regression after SMOTE Resampling:
+# 3.1. Logistic Regression after SMOTE Resampling:
 
 a.The dataset was upsampled to 154,156 positive samples and 154,698 negative samples, maintaining a 70/30 Train/Test split. 
 
@@ -192,4 +192,46 @@ d. Numerical Insights:
 e. Possible Reasons for increase in performance metrics:
 
 * Balanced Data: SMOTE up-sampling created a more balanced representation of positive and negative instances, allowing the model to focus on positive cases.
+
+# 4. Feature Importance Plot Using Co efficients from Logistic Regression:
+
+In addition to the quantitative evaluation metrics, a visual representation of feature importance was generated from the logistic regression model coefficients. This plot aimed to provide a clear understanding of the contribution of each feature to the prediction of heart disease.
+
+```{R}
+coefficients <- coef(logistic_model)[-1]
+feature_names <- names(coefficients)
+
+importance_df <- data.frame(
+  Feature = feature_names,
+  Importance = coefficients
+)
+
+# Convert Importance column to numeric
+importance_df$Importance <- as.numeric(importance_df$Importance)
+
+# Sort the dataframe by importance
+importance_df <- importance_df[order(importance_df$Importance, decreasing = TRUE), ]
+
+ggplot(importance_df, aes(x = Feature, y = Importance)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Logistic Regression Feature Importance") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Key Observations:
+
+Feature Importance Plot: The plot showcases the absolute values of the logistic regression coefficients, offering insights into the magnitude and directionality of each feature's impact on the prediction.
+
+Top Features: Features such as 'Arthritis,' 'General_Health,' 'Age_Category,' 'Smoking_History,' 'Sex' emerged as prominent contributors to the model, whereas features we thought would be more prominent such as 'Height, ' 'Weight, ' 'Alcohol consumption' turned out to be least significant.
+
+```{r, results='asis'}
+my_data <- data.frame(
+  Feature = c("Age_Category", "Diabetes", "Smoking_History", "BMI", "General Health", "Weight_kg", "Height_cm", "Exercise", "Arthritis", "Sex", "Other_Cancer"),
+  Correlation = c("Positive", "Positive", "Positive", "Positive", "Positive", "Positive", "Negative", "Negative", "Negative", "Negative", "Negative"),
+  Explanation = c("As the age category increases, the risk of heart disease also increases.", "Having diabetes is a significant risk factor for heart disease.", "Having a smoking history increases the risk of heart disease.", "Higher BMI is associated with an increased risk of heart disease.", "Poorer general health is associated with an increased risk of heart disease.", "Higher weight is associated with an increased risk of heart disease.", "Taller height is associated with a lower risk of heart disease. This is likely due to the fact that taller people have a lower risk of obesity, which is a risk factor for heart disease.", "Regular exercise reduces the risk of heart disease.", "Having arthritis is associated with a lower risk of heart disease. This is likely due to the fact that people with arthritis are less likely to be physically active, which is a risk factor for heart disease.", "Being female is associated with a lower risk of heart disease compared to males. This is likely due to the fact that females have higher levels of estrogen, which is a protective hormone against heart disease.", "Having other types of cancer is associated with a lower risk of heart disease. This is likely due to the fact that people with other cancers are more likely to be monitored by their doctors and receive early treatment for heart disease.")
+)
+kable(my_data, caption = "FEATURE IMPORTANCE TABLE", format = "html", align = "c")
+```
+
+
 
