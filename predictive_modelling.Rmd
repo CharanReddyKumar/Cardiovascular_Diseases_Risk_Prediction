@@ -233,5 +233,43 @@ my_data <- data.frame(
 kable(my_data, caption = "FEATURE IMPORTANCE TABLE", format = "html", align = "c")
 ```
 
+# 5. Logistic Regression with Upsampling + Statistically Significant Features:
 
+```{R}
+logistic_model <- glm(Heart_Disease ~ General_Health + Arthritis + Sex + Age_Category + Smoking_History, data = train_data_after_upsampling, family = binomial)
 
+y_pred_prob <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
+y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
+
+accuracy <- sum(y_pred == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = y_pred)
+
+print("Confusion Matrix:")
+print(conf_matrix)
+```
+
+```{R}
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & y_pred == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 0)
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+a. To further refine the model, a focus on statistically significant features post-upsampling was undertaken. This step aimed to streamline the model's complexity while retaining predictive power. The resulting model demonstrated a balanced trade-off between accuracy, precision, and recall.
+
+b. Key Observations:
+
+* Balanced Performance: The model achieved a balanced trade-off, indicating that certain features played a more pivotal role in predicting heart disease.
+
+c. Numerical Insights:
+
+* Accuracy: A slight decrease from 0.73 to 0.72 suggests a trade-off for a more interpretable and efficient model.
+* Precision: The minimal decrease from 0.73 to 0.71 indicates robust positive predictions.
+* Recall: The maintenance of high recall (0.75) suggests effective identification of positive cases.
+* F1 Score: The harmonic mean reflects the balanced nature of precision and recall.
+
+Possible Reasons:
+* Feature Streamlining: Focusing on statistically significant features simplified the model, preventing overfitting.
