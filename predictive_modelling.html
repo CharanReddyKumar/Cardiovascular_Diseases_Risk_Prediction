@@ -1616,7 +1616,8 @@ this leg of our journey!</p>
 library(glmnet)</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
 <pre><code>## Loaded glmnet 4.1-8</code></pre>
-<pre class="r"><code>library(ggplot2)</code></pre>
+<pre class="r"><code>library(ggplot2)
+library(xgboost)</code></pre>
 <pre class="r"><code>data = read.csv(&#39;CVD.csv&#39;)
 data$Exercise &lt;- ifelse(data$Exercise == &#39;No&#39;, 0, 1)
 data$Heart_Disease &lt;- ifelse(data$Heart_Disease == &#39;No&#39;, 0, 1)
@@ -2133,6 +2134,411 @@ iterative modeling process. While the initial model showcased high
 accuracy, addressing the recall limitation through upsampling, feature
 selection, and hyperparameter tuning unveiled a more nuanced
 understanding of the predictive factors.</p>
+<pre class="r"><code>df = read.csv(&#39;CVD.csv&#39;)
+df$Sex &lt;- factor(df$Sex)
+
+df$General_Health &lt;- factor(df$General_Health)
+
+df$Checkup &lt;- factor(df$Checkup)
+
+#  &#39;Age_Category&#39; to a factor
+df$Age_Category &lt;- factor(df$Age_Category)
+
+#  &#39;Smoking_History&#39; to a factor
+df$Smoking_History &lt;- factor(df$Smoking_History)
+
+#  &#39;Heart_Disease&#39; to a factor
+df$Heart_Disease &lt;- factor(df$Heart_Disease)
+
+#  &#39;Skin_Cancer&#39; to a factor
+df$Skin_Cancer &lt;- factor(df$Skin_Cancer)
+
+#  &#39;Other_Cancer&#39; to a factor
+df$Other_Cancer &lt;- factor(df$Other_Cancer)
+
+#  &#39;Arthritis&#39; to a factor
+df$Arthritis &lt;- factor(df$Arthritis)
+
+#  &#39;Depression&#39; to a factor
+df$Depression &lt;- factor(df$Depression)
+
+#  &#39;Diabetes&#39; to a factor
+df$Diabetes &lt;- factor(df$Diabetes)
+
+#  &#39;Diabetes&#39; to a factor
+df$Exercise &lt;- factor(df$Exercise)
+
+dfDuplicate &lt;- sum(duplicated(df))
+
+df &lt;- unique(df)</code></pre>
+</div>
+<div id="development-of-decision-tree-models-for-heart-disease-prediction" class="section level1">
+<h1>8.Development of Decision Tree Models for Heart Disease
+Prediction</h1>
+<p>In our study, we developed two variants of decision tree models to
+predict the occurrence of heart disease. Decision trees are a type of
+supervised learning algorithm that are widely used for classification
+tasks due to their interpretability and simplicity.</p>
+<p>8.1 Basic Decision Tree Model:</p>
+<ul>
+<li>Model Building: The basic model was constructed using the rpart
+package in R. This model (decisionTreeModel) was trained on the entire
+dataset (df) with Heart_Disease as the target variable.</li>
+<li>Data Splitting and Training: The dataset was split into training
+(80%) and testing (20%) sets, ensuring reproducibility with
+set.seed(123). The model (fit) was then trained on the training data
+using the rpart function with specific control parameters (cp = 0.001,
+minsplit = 20), aimed at refining the model’s complexity and sensitivity
+to data splits.</li>
+<li>Model Evaluation: The performance of the model was evaluated on the
+test data, providing initial insights into its predictive
+capabilities.</li>
+</ul>
+<p>8.2 Improved Decision Tree Model with ROSE:</p>
+<ul>
+<li>Addressing Class Imbalance with ROSE: To enhance the model’s
+performance, especially in the context of class imbalance, we employed
+the ROSE (Random Over Sampling Examples) technique. This approach
+balanced the dataset by oversampling the minority class and
+undersampling the majority class, creating a more representative
+training dataset (balancedData).</li>
+<li>Model Training on Balanced Data: The improved model (fitBalanced)
+was then trained on this balanced dataset.</li>
+<li>Model Evaluation: Similar to the basic model, the performance of the
+improved model was assessed on the same test data, allowing for a direct
+comparison between the two models.</li>
+</ul>
+<pre class="r"><code>library(rpart)
+library(rpart.plot)
+
+# Building the decision tree model
+decisionTreeModel &lt;- rpart(Heart_Disease ~ ., data = df, method = &quot;class&quot;)</code></pre>
+<pre class="r"><code># Splitting the data
+set.seed(123)  # For reproducibility
+trainIndex &lt;- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
+trainData &lt;- df[trainIndex,]
+testData &lt;- df[-trainIndex,]
+
+fit &lt;- rpart(Heart_Disease ~ ., data = trainData, method = &quot;class&quot;, 
+             control = rpart.control(cp = 0.001, minsplit = 20))
+
+# Predict on the test data
+predictions &lt;- predict(fit, testData, type = &quot;class&quot;)
+
+# Evaluating the model
+confusionMatrix(predictions, testData$Heart_Disease)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    No   Yes
+##        No  56760  4994
+##        Yes     0     0
+##                                          
+##                Accuracy : 0.9191         
+##                  95% CI : (0.917, 0.9213)
+##     No Information Rate : 0.9191         
+##     P-Value [Acc &gt; NIR] : 0.5038         
+##                                          
+##                   Kappa : 0              
+##                                          
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16         
+##                                          
+##             Sensitivity : 1.0000         
+##             Specificity : 0.0000         
+##          Pos Pred Value : 0.9191         
+##          Neg Pred Value :    NaN         
+##              Prevalence : 0.9191         
+##          Detection Rate : 0.9191         
+##    Detection Prevalence : 1.0000         
+##       Balanced Accuracy : 0.5000         
+##                                          
+##        &#39;Positive&#39; Class : No             
+## </code></pre>
+<pre class="r"><code># Balance the dataset using ROSE
+balancedData &lt;- ROSE(Heart_Disease ~ ., data = trainData)$data
+
+# Fit the model on the balanced training data
+fitBalanced &lt;- rpart(Heart_Disease ~ ., data = balancedData, method = &quot;class&quot;)
+
+# Predict on the test data
+predictionsBalanced &lt;- predict(fitBalanced, testData, type = &quot;class&quot;)
+
+# Evaluate the model directly with the predictions
+confusionMatrix(predictionsBalanced, testData$Heart_Disease)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    No   Yes
+##        No  40404  1178
+##        Yes 16356  3816
+##                                           
+##                Accuracy : 0.7161          
+##                  95% CI : (0.7125, 0.7196)
+##     No Information Rate : 0.9191          
+##     P-Value [Acc &gt; NIR] : 1               
+##                                           
+##                   Kappa : 0.1995          
+##                                           
+##  Mcnemar&#39;s Test P-Value : &lt;2e-16          
+##                                           
+##             Sensitivity : 0.7118          
+##             Specificity : 0.7641          
+##          Pos Pred Value : 0.9717          
+##          Neg Pred Value : 0.1892          
+##              Prevalence : 0.9191          
+##          Detection Rate : 0.6543          
+##    Detection Prevalence : 0.6733          
+##       Balanced Accuracy : 0.7380          
+##                                           
+##        &#39;Positive&#39; Class : No              
+## </code></pre>
+</div>
+<div id="comprehensive-comparison-of-basic-and-improved-decision-tree-models" class="section level1">
+<h1>9. Comprehensive Comparison of Basic and Improved Decision Tree
+Models:</h1>
+<p>9.1 Model Performance Metrics:</p>
+<ul>
+<li>Accuracy: The basic model exhibited a high accuracy of 0.9191,
+which, though seemingly impressive, was primarily due to its bias
+towards the majority class. The improved model, with an accuracy of
+0.7161, reflects a more genuine performance across both classes.</li>
+<li>Sensitivity and Specificity: The basic model’s sensitivity (1.00)
+and specificity (0.00) underscore its one-sided predictive nature. In
+contrast, the improved model achieved a sensitivity of 0.7118 and
+specificity of 0.7641, indicating a more balanced approach in predicting
+both classes.</li>
+<li>Positive and Negative Predictive Values: The basic model’s high PPV
+(0.9191) was overshadowed by its inability to predict the minority class
+accurately. The improved model maintained a high PPV (0.9717) while also
+showing a modest NPV (0.1892), though there’s room for improvement in
+predicting the positive class more accurately.</li>
+</ul>
+<p>9.2 Impact of Class Imbalance:</p>
+<ul>
+<li>Basic Model: Its metrics were skewed due to the overwhelming
+presence of the majority class in the dataset. This led to a high number
+of false negatives, as the model predominantly predicted the ‘No’
+class.</li>
+<li>Improved Model: Utilizing the ROSE technique to balance the dataset,
+the improved model provided a more accurate reflection of its predictive
+capabilities, ensuring that both classes were represented more equally
+in the training process.</li>
+</ul>
+<p>9.3 Reliability and Agreement:</p>
+<ul>
+<li>Kappa Statistic: The basic model’s kappa value of 0 indicated no
+agreement beyond random chance, despite its high accuracy. The improved
+model, with a kappa of 0.1995, showed a slight but significant
+improvement, indicating that its predictions were more than just random
+chance.</li>
+<li>McNemar’s Test: This test further affirmed the significant
+difference in the model’s error rates for the two classes, especially in
+the improved model.</li>
+</ul>
+<p>9.4 F1 Score - Harmonic Mean of Precision and Recall:</p>
+<ul>
+<li>The F1 Score was not a relevant metric for the basic model due to
+its skewed predictions. However, for the improved model, the F1 Score of
+approximately 0.8211 signified a well-balanced trade-off between
+precision and recall, making it a more reliable indicator of model
+performance in imbalanced datasets.</li>
+</ul>
+<ol start="10" style="list-style-type: decimal">
+<li>Concluding Remarks: This comparative analysis underscores the
+pitfalls of ignoring class imbalance in predictive modeling,
+particularly in medical diagnostic contexts. The basic decision tree
+model, while displaying high accuracy, failed to provide meaningful
+predictive insights. The application of the ROSE technique in the
+improved model marked a significant step towards more balanced and
+realistic predictions.</li>
+</ol>
+</div>
+<div id="xgboost-model" class="section level1">
+<h1>10. XgBoost Model</h1>
+<pre class="r"><code># Selecting specific variables
+selected_vars &lt;- c(&#39;Depression&#39;, &#39;Diabetes&#39;, &#39;Arthritis&#39;, &#39;Sex&#39;, &#39;Age_Category&#39;, 
+                   &#39;Smoking_History&#39;, &#39;BMI&#39;, &#39;Green_Vegetables_Consumption&#39;, 
+                   &#39;FriedPotato_Consumption&#39;, &#39;Heart_Disease&#39;)
+df_selected &lt;- df[selected_vars]
+
+
+# Splitting data into training and testing sets
+set.seed(123)
+split &lt;- createDataPartition(df_selected$Heart_Disease, p = 0.8, list = FALSE)
+trainData &lt;- df_selected[split, ]
+testData &lt;- df_selected[-split, ]</code></pre>
+<p><strong>This R script is focused on data preparation for a machine
+learning model predicting heart disease. Initially, it narrows down the
+dataset df to select pertinent variables: ‘Depression’, ‘Diabetes’,
+‘Arthritis’, ‘Sex’, ‘Age_Category’, ‘Smoking_History’, ‘BMI’,
+‘Green_Vegetables_Consumption’, ‘FriedPotato_Consumption’, and
+‘Heart_Disease’. This refined dataset, df_selected, is then split into
+training and testing sets, using the createDataPartition function with a
+set seed for reproducibility. Specifically, 80% of the data is allocated
+for training (trainData) and the remaining 20% for testing (testData),
+based on the ‘Heart_Disease’ variable.</strong></p>
+<pre class="r"><code>library(caret)
+
+# Apply one-hot encoding for XGBoost
+dummies &lt;- dummyVars(&quot; ~ .&quot;, data = df)
+df_xgb &lt;- predict(dummies, newdata = df)
+df_xgb &lt;- as.data.frame(df_xgb)
+
+# Ensure &#39;Heart_Disease&#39; remains as numeric
+df_xgb$Heart_Disease &lt;- as.numeric(df$Heart_Disease) - 1
+
+# Splitting data into training and testing sets for XGBoost
+split_xgb &lt;- createDataPartition(df_xgb$Heart_Disease, p = 0.8, list = FALSE)
+trainData_xgb &lt;- df_xgb[split_xgb, ]
+testData_xgb &lt;- df_xgb[-split_xgb, ]
+
+# Prepare DMatrix for XGBoost
+dtrain &lt;- xgb.DMatrix(data = as.matrix(trainData_xgb[-which(names(trainData_xgb) == &quot;Heart_Disease&quot;)]), 
+                      label = trainData_xgb$Heart_Disease)
+dtest &lt;- xgb.DMatrix(data = as.matrix(testData_xgb[-which(names(testData_xgb) == &quot;Heart_Disease&quot;)]), 
+                     label = testData_xgb$Heart_Disease)
+
+
+
+
+# Calculate the ratio for the scale_pos_weight parameter
+negative_cases &lt;- sum(trainData_xgb$Heart_Disease == 0)
+positive_cases &lt;- sum(trainData_xgb$Heart_Disease == 1)
+
+# Avoid division by zero in case there are no positive cases
+if (positive_cases == 0) {
+  stop(&quot;No positive cases found in the training data.&quot;)
+}
+
+scale_pos_weight &lt;- negative_cases / positive_cases
+
+# Now define your XGBoost parameters including scale_pos_weight
+params &lt;- list(
+  objective = &quot;binary:logistic&quot;,
+  scale_pos_weight = scale_pos_weight,
+  max_depth = 6,
+  min_child_weight = 1,
+  subsample = 0.8,
+  colsample_bytree = 0.8,
+  eta = 0.3
+)
+
+
+# Train the XGBoost model
+xgb_model &lt;- xgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 100,
+  watchlist = list(eval = dtest, train = dtrain),
+  early_stopping_rounds = 10
+)</code></pre>
+<pre><code>## [1]  eval-logloss:0.437493   train-logloss:0.437493 
+## Multiple eval metrics are present. Will use train_logloss for early stopping.
+## Will train until train_logloss hasn&#39;t improved in 10 rounds.
+## 
+## [2]  eval-logloss:0.296289   train-logloss:0.296289 
+## [3]  eval-logloss:0.207315   train-logloss:0.207315 
+## [4]  eval-logloss:0.147789   train-logloss:0.147789 
+## [5]  eval-logloss:0.106597   train-logloss:0.106597 
+## [6]  eval-logloss:0.077487   train-logloss:0.077487 
+## [7]  eval-logloss:0.056628   train-logloss:0.056628 
+## [8]  eval-logloss:0.041541   train-logloss:0.041541 
+## [9]  eval-logloss:0.030555   train-logloss:0.030555 
+## [10] eval-logloss:0.022518   train-logloss:0.022518 
+## [11] eval-logloss:0.016618   train-logloss:0.016618 
+## [12] eval-logloss:0.012277   train-logloss:0.012277 
+## [13] eval-logloss:0.009077   train-logloss:0.009077 
+## [14] eval-logloss:0.006716   train-logloss:0.006716 
+## [15] eval-logloss:0.004971   train-logloss:0.004971 
+## [16] eval-logloss:0.003680   train-logloss:0.003680 
+## [17] eval-logloss:0.002726   train-logloss:0.002726 
+## [18] eval-logloss:0.002020   train-logloss:0.002020 
+## [19] eval-logloss:0.001497   train-logloss:0.001497 
+## [20] eval-logloss:0.001110   train-logloss:0.001110 
+## [21] eval-logloss:0.000823   train-logloss:0.000823 
+## [22] eval-logloss:0.000611   train-logloss:0.000611 
+## [23] eval-logloss:0.000454   train-logloss:0.000454 
+## [24] eval-logloss:0.000337   train-logloss:0.000337 
+## [25] eval-logloss:0.000251   train-logloss:0.000251 
+## [26] eval-logloss:0.000187   train-logloss:0.000187 
+## [27] eval-logloss:0.000140   train-logloss:0.000140 
+## [28] eval-logloss:0.000105   train-logloss:0.000105 
+## [29] eval-logloss:0.000079   train-logloss:0.000079 
+## [30] eval-logloss:0.000060   train-logloss:0.000060 
+## [31] eval-logloss:0.000045   train-logloss:0.000045 
+## [32] eval-logloss:0.000035   train-logloss:0.000035 
+## [33] eval-logloss:0.000027   train-logloss:0.000027 
+## [34] eval-logloss:0.000021   train-logloss:0.000021 
+## [35] eval-logloss:0.000020   train-logloss:0.000020 
+## [36] eval-logloss:0.000016   train-logloss:0.000016 
+## [37] eval-logloss:0.000013   train-logloss:0.000013 
+## [38] eval-logloss:0.000010   train-logloss:0.000010 
+## [39] eval-logloss:0.000009   train-logloss:0.000009 
+## [40] eval-logloss:0.000007   train-logloss:0.000007 
+## [41] eval-logloss:0.000006   train-logloss:0.000006 
+## [42] eval-logloss:0.000005   train-logloss:0.000005 
+## [43] eval-logloss:0.000005   train-logloss:0.000005 
+## [44] eval-logloss:0.000005   train-logloss:0.000005 
+## [45] eval-logloss:0.000005   train-logloss:0.000005 
+## [46] eval-logloss:0.000005   train-logloss:0.000005 
+## [47] eval-logloss:0.000005   train-logloss:0.000005 
+## [48] eval-logloss:0.000005   train-logloss:0.000005 
+## [49] eval-logloss:0.000005   train-logloss:0.000005 
+## [50] eval-logloss:0.000005   train-logloss:0.000005 
+## [51] eval-logloss:0.000005   train-logloss:0.000005 
+## [52] eval-logloss:0.000005   train-logloss:0.000005 
+## Stopping. Best iteration:
+## [42] eval-logloss:0.000005   train-logloss:0.000005</code></pre>
+<pre class="r"><code># Predict on test data
+xgb_predictions &lt;- predict(xgb_model, dtest)
+xgb_predicted_labels &lt;- ifelse(xgb_predictions &gt; 0.5, 1, 0)
+
+# Evaluate model performance
+confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeric(testData$Heart_Disease) - 1, levels = c(0, 1)))</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction     0     1
+##          0 52243  4557
+##          1  4517   437
+##                                           
+##                Accuracy : 0.8531          
+##                  95% CI : (0.8502, 0.8558)
+##     No Information Rate : 0.9191          
+##     P-Value [Acc &gt; NIR] : 1.0000          
+##                                           
+##                   Kappa : 0.008           
+##                                           
+##  Mcnemar&#39;s Test P-Value : 0.6822          
+##                                           
+##             Sensitivity : 0.92042         
+##             Specificity : 0.08751         
+##          Pos Pred Value : 0.91977         
+##          Neg Pred Value : 0.08821         
+##              Prevalence : 0.91913         
+##          Detection Rate : 0.84599         
+##    Detection Prevalence : 0.91978         
+##       Balanced Accuracy : 0.50396         
+##                                           
+##        &#39;Positive&#39; Class : 0               
+## </code></pre>
+<p><strong>Interpretation:</strong> <strong>Class Imbalance Impact: The
+high prevalence rate (0.91915) suggests a highly imbalanced dataset.
+This imbalance is reflected in the high accuracy but low balanced
+accuracy, indicating the model is biased towards the majority
+class.</strong></p>
+<p><strong>Poor Specificity: The model struggles to correctly identify
+positive instances of heart disease, which is a critical issue for a
+medical diagnostic tool.</strong></p>
+<p><strong>High Sensitivity but Low Specificity: This indicates the
+model is excellent at identifying ‘No Heart Disease’ cases but not
+‘Heart Disease’ cases.</strong></p>
+<p><strong>Kappa Statistic: The very low kappa score suggests that the
+agreement between the predicted and actual values is minimal, mostly due
+to chance.</strong></p>
+<p><strong>Positive Predictive Value and Negative Predictive Value: Both
+are low, indicating a high rate of false positives and false
+negatives.</strong></p>
 </div>
 
 

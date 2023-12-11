@@ -33,6 +33,8 @@ library(caret)
 library(knitr)
 library(glmnet)
 library(ggplot2)
+library(xgboost)
+
 ```
 
 
@@ -461,3 +463,99 @@ confusionMatrix(predictionsBalanced, testData$Heart_Disease)
 
 10. Concluding Remarks:
 This comparative analysis underscores the pitfalls of ignoring class imbalance in predictive modeling, particularly in medical diagnostic contexts. The basic decision tree model, while displaying high accuracy, failed to provide meaningful predictive insights. The application of the ROSE technique in the improved model marked a significant step towards more balanced and realistic predictions.
+
+# 10. XgBoost Model
+```{R}
+
+# Selecting specific variables
+selected_vars <- c('Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 
+                   'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 
+                   'FriedPotato_Consumption', 'Heart_Disease')
+df_selected <- df[selected_vars]
+
+
+# Splitting data into training and testing sets
+set.seed(123)
+split <- createDataPartition(df_selected$Heart_Disease, p = 0.8, list = FALSE)
+trainData <- df_selected[split, ]
+testData <- df_selected[-split, ]
+
+```
+**This R script is focused on data preparation for a machine learning model predicting heart disease. Initially, it narrows down the dataset df to select pertinent variables: 'Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 'FriedPotato_Consumption', and 'Heart_Disease'. This refined dataset, df_selected, is then split into training and testing sets, using the createDataPartition function with a set seed for reproducibility. Specifically, 80% of the data is allocated for training (trainData) and the remaining 20% for testing (testData), based on the 'Heart_Disease' variable.**
+```{R}
+
+library(caret)
+
+# Apply one-hot encoding for XGBoost
+dummies <- dummyVars(" ~ .", data = df)
+df_xgb <- predict(dummies, newdata = df)
+df_xgb <- as.data.frame(df_xgb)
+
+# Ensure 'Heart_Disease' remains as numeric
+df_xgb$Heart_Disease <- as.numeric(df$Heart_Disease) - 1
+
+# Splitting data into training and testing sets for XGBoost
+split_xgb <- createDataPartition(df_xgb$Heart_Disease, p = 0.8, list = FALSE)
+trainData_xgb <- df_xgb[split_xgb, ]
+testData_xgb <- df_xgb[-split_xgb, ]
+
+# Prepare DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(trainData_xgb[-which(names(trainData_xgb) == "Heart_Disease")]), 
+                      label = trainData_xgb$Heart_Disease)
+dtest <- xgb.DMatrix(data = as.matrix(testData_xgb[-which(names(testData_xgb) == "Heart_Disease")]), 
+                     label = testData_xgb$Heart_Disease)
+
+
+
+
+# Calculate the ratio for the scale_pos_weight parameter
+negative_cases <- sum(trainData_xgb$Heart_Disease == 0)
+positive_cases <- sum(trainData_xgb$Heart_Disease == 1)
+
+# Avoid division by zero in case there are no positive cases
+if (positive_cases == 0) {
+  stop("No positive cases found in the training data.")
+}
+
+scale_pos_weight <- negative_cases / positive_cases
+
+# Now define your XGBoost parameters including scale_pos_weight
+params <- list(
+  objective = "binary:logistic",
+  scale_pos_weight = scale_pos_weight,
+  max_depth = 6,
+  min_child_weight = 1,
+  subsample = 0.8,
+  colsample_bytree = 0.8,
+  eta = 0.3
+)
+
+
+# Train the XGBoost model
+xgb_model <- xgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 100,
+  watchlist = list(eval = dtest, train = dtrain),
+  early_stopping_rounds = 10
+)
+
+# Predict on test data
+xgb_predictions <- predict(xgb_model, dtest)
+xgb_predicted_labels <- ifelse(xgb_predictions > 0.5, 1, 0)
+
+# Evaluate model performance
+confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeric(testData$Heart_Disease) - 1, levels = c(0, 1)))
+
+
+```
+**Interpretation:**
+**Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.**
+
+**Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.**
+
+**High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.**
+
+**Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.**
+
+**Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.**
