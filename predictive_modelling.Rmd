@@ -1,0 +1,342 @@
+---
+title: "Decoding Heart Disease: An In-depth Analysis and Predictive Modeling Approach"
+author: "Parameshwar Bhat, Charan Reddy Kumar, Sailesh Baabu Suresh Babu, Ram Mannuru"
+date: "10 December, 2023"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Introduction:
+
+a. After diving deep into our health dataset, exploring the relationships between various factors and heart disease in the previous Exploratory data analysis paper, we're now gearing up for the next phase: predictive modeling.
+
+b. The goal is to use advanced techniques to build a smart model that can predict the chances of someone getting heart disease based on their health details.
+
+c. In this part of our study, we'll be using a tool called logistic regression, tweaking it using methods like upsampling, and fine-tuning it through hyperparameter adjustments. However, recognizing the limitations of linear models, we extend our horizon to decision trees, leveraging their ability to handle complex, non-linear relationships.
+
+d. Our mission is not just about predicting who might get heart disease but understanding the key factors that contribute to it. By doing this, we hope to uncover insights that can guide better healthcare decisions.
+
+We're moving from exploring data to building something practical – a model that not only forecasts but also teaches us more about heart health and how we can take better care of ourselves. So, buckle up for this leg of our journey!
+
+```{R}
+library(ROSE)
+library(pROC)
+library(caret)
+library(knitr)
+library(glmnet)
+library(ggplot2)
+```
+
+
+```{R}
+data = read.csv('CVD.csv')
+data$Exercise <- ifelse(data$Exercise == 'No', 0, 1)
+data$Heart_Disease <- ifelse(data$Heart_Disease == 'No', 0, 1)
+data$Skin_Cancer <- ifelse(data$Skin_Cancer == 'No', 0, 1)
+data$Other_Cancer <- ifelse(data$Other_Cancer == 'No', 0, 1)
+data$Depression <- ifelse(data$Depression == 'No', 0, 1)
+data$Arthritis <- ifelse(data$Arthritis == 'No', 0, 1)
+data$Smoking_History <- ifelse(data$Smoking_History == 'No', 0, 1)
+
+data$Checkup <- ifelse(data$Checkup == 'Within the past 2 years', 2,
+                       ifelse(data$Checkup == 'Within the past year', 1,
+                              ifelse(data$Checkup == '5 or more years ago', 4,
+                                     ifelse(data$Checkup == 'Within the past 5 years', 3, 0))))
+
+data$General_Health <- ifelse(data$General_Health == 'Poor', 0,
+                               ifelse(data$General_Health == 'Fair', 1,
+                                      ifelse(data$General_Health == 'Good', 2,
+                                             ifelse(data$General_Health == 'Very Good', 3, 4))))
+
+data$Sex <- ifelse(data$Sex == 'Male', 1, 2)
+
+data$Age_Category <- ifelse(data$Age_Category == '18-24', 0,
+                            ifelse(data$Age_Category == '25-29', 1,
+                                   ifelse(data$Age_Category == '30-34', 2,
+                                          ifelse(data$Age_Category == '35-39', 3,
+                                                 ifelse(data$Age_Category == '40-44', 4,
+                                                        ifelse(data$Age_Category == '45-49', 5,
+                                                               ifelse(data$Age_Category == '50-54', 6,
+                                                                      ifelse(data$Age_Category == '55-59', 7,
+                                                                             ifelse(data$Age_Category == '60-64', 8,
+                                                                                    ifelse(data$Age_Category == '65-69', 9,
+                                                                                           ifelse(data$Age_Category == '70-74', 10,
+                                                                                                  ifelse(data$Age_Category == '75-79', 11,
+                                                                                                         ifelse(data$Age_Category == '80+', 12, NA)))))))))))))
+
+data$Diabetes <- ifelse(data$Diabetes == 'No', 0,
+                        ifelse(data$Diabetes == 'Yes', 3,
+                               ifelse(data$Diabetes == 'No, pre-diabetes or borderline diabetes', 1,
+                                      ifelse(data$Diabetes == 'Yes, but female told only during pregnancy', 2, NA))))
+```
+
+```{R}
+# Split the data into training and testing sets
+set.seed(42)  # for reproducibility
+train_indices <- sample(1:nrow(data), 0.8 * nrow(data))
+
+train_data_before_upsampling <- data[train_indices, ]
+test_data_before_upsampling <- data[-train_indices, ]
+
+# Create a logistic regression model
+logistic_model <- glm(Heart_Disease ~ ., data = train_data_before_upsampling, family = binomial)
+
+# Summary of the model
+#summary(logistic_model)
+
+# Make predictions on the test set
+train_predictions <- predict(logistic_model, newdata = train_data_before_upsampling, type = "response")
+train_predicted_classes <- ifelse(train_predictions > 0.5, 1, 0)
+train_accuracy <- mean(train_predicted_classes == train_data_before_upsampling$Heart_Disease)
+
+test_predictions <- predict(logistic_model, newdata = test_data_before_upsampling, type = "response")
+test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
+test_accuracy <- mean(test_predicted_classes == test_data_before_upsampling$Heart_Disease)
+
+cat("Train Accuracy :", train_accuracy, ", Test Accuracy :", test_accuracy, "\n")
+
+confusion_matrix <- table(test_predicted_classes, test_data_before_upsampling$Heart_Disease)
+cat("Confusion Matrix:\n", confusion_matrix, "\n")
+```
+
+# 2. Logistic Regression with All Features:
+
+a. The initial logistic regression model utilized the entire dataset, comprising 308,854 samples, with a positive-to-negative ratio of 24,971 to 283,883.
+
+b. The model achieved impressive accuracy metrics, boasting a Train Accuracy of 0.91 and a Test Accuracy of 0.92. However, a closer examination revealed a limitation in recall (0.06), indicating challenges in identifying positive instances.
+
+c. Challenges Identified:
+* Recall Limitation: The model struggled to effectively identify individuals with heart disease, as evidenced by the low recall.
+
+d. Possible Reasons:
+* Imbalanced Data: The highly imbalanced positive-to-negative ratio might have led the model to prioritize overall accuracy at the expense of recall.
+
+```{R}
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+precision <- confusion_matrix[2, 2] / sum(confusion_matrix[2,])
+recall <- confusion_matrix[2, 2] / sum(confusion_matrix[,2])
+f1_score <- 2 * precision * recall / (precision + recall)
+cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+# 3. Upsampling since this is a class imbalance Dataset:
+
+To address the Imbalance in the dataset, Synthetic Minority Over-sampling Technique (SMOTE) was employed.
+
+```{R}
+X <- data[, c("Exercise", "Skin_Cancer", "Other_Cancer", "Depression", "Arthritis", "Smoking_History", "Checkup", "General_Health", "Sex", "Age_Category", "Diabetes")]
+y <- data$Heart_Disease
+ros_obj <- ROSE(Heart_Disease ~ ., data = data, seed = 42, p = 0.5, N = length(y))
+data_resampled <- ROSE(formula = Heart_Disease ~ ., data = data, N = length(y), p = 0.5, seed = 42)
+set.seed(42)
+resampled_data <- data_resampled$data
+split_index <- createDataPartition(resampled_data$Heart_Disease, p = 0.7, list = FALSE)
+train_data_after_upsampling <- resampled_data[split_index, ]
+test_data_after_upsampling <- resampled_data[-split_index, ]
+logistic_model <- glm(Heart_Disease ~ ., data = train_data_after_upsampling, family = binomial)
+# Make predictions on the test set
+train_predictions <- predict(logistic_model, newdata = train_data_after_upsampling, type = "response")
+train_predicted_classes <- ifelse(train_predictions > 0.5, 1, 0)
+train_accuracy <- mean(train_predicted_classes == train_data_after_upsampling$Heart_Disease)
+
+test_predictions <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
+test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
+test_accuracy <- mean(test_predicted_classes == test_data_after_upsampling$Heart_Disease)
+
+cat("Train Accuracy :", train_accuracy, ", Test Accuracy :", test_accuracy, "\n")
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = test_predicted_classes)
+print("Confusion Matrix:")
+print(conf_matrix)
+```
+
+```{R}
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & test_predicted_classes == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 0)
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+cat("Accuracy :", test_accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+# 3.1. Logistic Regression after SMOTE Resampling:
+
+a.The dataset was upsampled to 154,156 positive samples and 154,698 negative samples, maintaining a 70/30 Train/Test split. 
+
+b. The logistic regression model on this upsampled data exhibited notable improvements in recall (0.76), suggesting enhanced sensitivity to positive cases.
+
+c. Findings:
+
+* Improved Recall: The SMOTE re sampling technique significantly enhanced the model's ability to identify individuals with heart disease.
+
+d. Numerical Insights:
+
+* Train Accuracy: The decrease from 0.91 to 0.74 could be attributed to the increased complexity of the dataset after up-sampling.
+
+* Test Accuracy: The slight reduction from 0.92 to 0.73 suggests a more balanced model.
+
+* Recall Improvement: The notable increase from 0.06 to 0.76 indicates a substantial enhancement in the model's sensitivity.
+
+* Precision: A decrease from 1.0 to 0.73 could be attributed to the increased number of positive predictions after up-sampling.
+
+* F1 Score: The balance between precision and recall reflects a more nuanced evaluation.
+
+e. Possible Reasons for increase in performance metrics:
+
+* Balanced Data: SMOTE up-sampling created a more balanced representation of positive and negative instances, allowing the model to focus on positive cases.
+
+# 4. Feature Importance Plot Using Co efficients from Logistic Regression:
+
+In addition to the quantitative evaluation metrics, a visual representation of feature importance was generated from the logistic regression model coefficients. This plot aimed to provide a clear understanding of the contribution of each feature to the prediction of heart disease.
+
+```{R}
+coefficients <- coef(logistic_model)[-1]
+feature_names <- names(coefficients)
+
+importance_df <- data.frame(
+  Feature = feature_names,
+  Importance = coefficients
+)
+
+# Convert Importance column to numeric
+importance_df$Importance <- as.numeric(importance_df$Importance)
+
+# Sort the dataframe by importance
+importance_df <- importance_df[order(importance_df$Importance, decreasing = TRUE), ]
+
+ggplot(importance_df, aes(x = Feature, y = Importance)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Logistic Regression Feature Importance") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Key Observations:
+
+Feature Importance Plot: The plot showcases the absolute values of the logistic regression coefficients, offering insights into the magnitude and directionality of each feature's impact on the prediction.
+
+Top Features: Features such as 'Arthritis,' 'General_Health,' 'Age_Category,' 'Smoking_History,' 'Sex' emerged as prominent contributors to the model, whereas features we thought would be more prominent such as 'Height, ' 'Weight, ' 'Alcohol consumption' turned out to be least significant.
+
+```{r, results='asis'}
+my_data <- data.frame(
+  Feature = c("Age_Category", "Diabetes", "Smoking_History", "BMI", "General Health", "Weight_kg", "Height_cm", "Exercise", "Arthritis", "Sex", "Other_Cancer"),
+  Correlation = c("Positive", "Positive", "Positive", "Positive", "Positive", "Positive", "Negative", "Negative", "Negative", "Negative", "Negative"),
+  Explanation = c("As the age category increases, the risk of heart disease also increases.", "Having diabetes is a significant risk factor for heart disease.", "Having a smoking history increases the risk of heart disease.", "Higher BMI is associated with an increased risk of heart disease.", "Poorer general health is associated with an increased risk of heart disease.", "Higher weight is associated with an increased risk of heart disease.", "Taller height is associated with a lower risk of heart disease. This is likely due to the fact that taller people have a lower risk of obesity, which is a risk factor for heart disease.", "Regular exercise reduces the risk of heart disease.", "Having arthritis is associated with a lower risk of heart disease. This is likely due to the fact that people with arthritis are less likely to be physically active, which is a risk factor for heart disease.", "Being female is associated with a lower risk of heart disease compared to males. This is likely due to the fact that females have higher levels of estrogen, which is a protective hormone against heart disease.", "Having other types of cancer is associated with a lower risk of heart disease. This is likely due to the fact that people with other cancers are more likely to be monitored by their doctors and receive early treatment for heart disease.")
+)
+kable(my_data, caption = "FEATURE IMPORTANCE TABLE", format = "html", align = "c")
+```
+
+# 5. Logistic Regression with Upsampling + Statistically Significant Features:
+
+```{R}
+logistic_model <- glm(Heart_Disease ~ General_Health + Arthritis + Sex + Age_Category + Smoking_History, data = train_data_after_upsampling, family = binomial)
+
+y_pred_prob <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
+y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
+
+accuracy <- sum(y_pred == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = y_pred)
+
+print("Confusion Matrix:")
+print(conf_matrix)
+```
+
+```{R}
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & y_pred == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 0)
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+a. To further refine the model, a focus on statistically significant features post-upsampling was undertaken. This step aimed to streamline the model's complexity while retaining predictive power. The resulting model demonstrated a balanced trade-off between accuracy, precision, and recall.
+
+b. Key Observations:
+
+* Balanced Performance: The model achieved a balanced trade-off, indicating that certain features played a more pivotal role in predicting heart disease.
+
+c. Numerical Insights:
+
+* Accuracy: A slight decrease from 0.73 to 0.72 suggests a trade-off for a more interpretable and efficient model.
+* Precision: The minimal decrease from 0.73 to 0.71 indicates robust positive predictions.
+* Recall: The maintenance of high recall (0.75) suggests effective identification of positive cases.
+* F1 Score: The harmonic mean reflects the balanced nature of precision and recall.
+
+Possible Reasons:
+* Feature Streamlining: Focusing on statistically significant features simplified the model, preventing overfitting.
+
+# 6. Hyperparameter Tuning:
+
+```{R}
+X_train <- as.matrix(train_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
+y_train <- train_data_after_upsampling$Heart_Disease
+
+X_test <- as.matrix(test_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
+
+cv_model <- cv.glmnet(
+  x = X_train,
+  y = y_train,
+  alpha = 0.5,
+  family = "binomial",
+  type.measure = "class"
+)
+
+best_lambda <- cv_model$lambda.min
+
+final_model <- glmnet(
+  x = X_train,
+  y = y_train,
+  alpha = 0.5,
+  family = "binomial",
+  lambda = best_lambda
+)
+
+tuned_predictions <- predict(final_model, s = best_lambda, newx = X_test, type = "response")
+tuned_predicted_classes <- ifelse(tuned_predictions > 0.5, 1, 0)
+tuned_accuracy <- sum(tuned_predicted_classes == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
+
+tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & tuned_predicted_classes == 1)
+fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & tuned_predicted_classes == 1)
+fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & tuned_predicted_classes == 0)
+
+precision <- tp / (tp + fp)
+recall <- tp / (tp + fn)
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = tuned_predicted_classes)
+print(conf_matrix)
+cat("Tuned Model Accuracy :", tuned_accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
+```
+
+Key Observations:
+
+a. In the pursuit of optimizing the logistic regression model, hyperparameter tuning was conducted.
+
+b. This involved fine-tuning parameters to achieve an optimal balance between bias and variance. The process aimed to enhance the model's generalizability and performance on unseen data.
+
+c. Outcomes:
+
+* Fine-tuned Model: The hyperparameter-tuned model aimed to strike an optimal balance between underfitting and overfitting.
+
+c. Numerical Insights:
+
+* Accuracy: The tuned model achieved an accuracy of 0.73.
+* Precision: The precision was 0.71, indicating robust positive predictions.
+* Recall: The recall was 0.75, suggesting effective identification of positive cases.
+* F1 Score: The F1 score, a harmonic mean of precision and recall, was 0.73.
+
+d. Possible Reasons:
+* Optimized Parameters: Fine-tuning addresses model complexity, potentially improving performance on unseen data.
+
+# 7. Conclusions from Logistic Regression:
+
+The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial model showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
