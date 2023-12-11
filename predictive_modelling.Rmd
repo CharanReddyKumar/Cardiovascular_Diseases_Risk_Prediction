@@ -340,3 +340,124 @@ d. Possible Reasons:
 # 7. Conclusions from Logistic Regression:
 
 The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial model showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
+
+
+```{r preprocessing for Decision Tree}
+df = read.csv('CVD.csv')
+df$Sex <- factor(df$Sex)
+
+df$General_Health <- factor(df$General_Health)
+
+df$Checkup <- factor(df$Checkup)
+
+#  'Age_Category' to a factor
+df$Age_Category <- factor(df$Age_Category)
+
+#  'Smoking_History' to a factor
+df$Smoking_History <- factor(df$Smoking_History)
+
+#  'Heart_Disease' to a factor
+df$Heart_Disease <- factor(df$Heart_Disease)
+
+#  'Skin_Cancer' to a factor
+df$Skin_Cancer <- factor(df$Skin_Cancer)
+
+#  'Other_Cancer' to a factor
+df$Other_Cancer <- factor(df$Other_Cancer)
+
+#  'Arthritis' to a factor
+df$Arthritis <- factor(df$Arthritis)
+
+#  'Depression' to a factor
+df$Depression <- factor(df$Depression)
+
+#  'Diabetes' to a factor
+df$Diabetes <- factor(df$Diabetes)
+
+#  'Diabetes' to a factor
+df$Exercise <- factor(df$Exercise)
+
+dfDuplicate <- sum(duplicated(df))
+
+df <- unique(df)
+```
+
+# 8.Development of Decision Tree Models for Heart Disease Prediction
+
+In our study, we developed two variants of decision tree models to predict the occurrence of heart disease. Decision trees are a type of supervised learning algorithm that are widely used for classification tasks due to their interpretability and simplicity.
+
+8.1 Basic Decision Tree Model:
+
+* Model Building: The basic model was constructed using the rpart package in R. This model (decisionTreeModel) was trained on the entire dataset (df) with Heart_Disease as the target variable.
+* Data Splitting and Training: The dataset was split into training (80%) and testing (20%) sets, ensuring reproducibility with set.seed(123). The model (fit) was then trained on the training data using the rpart function with specific control parameters (cp = 0.001, minsplit = 20), aimed at refining the model's complexity and sensitivity to data splits.
+* Model Evaluation: The performance of the model was evaluated on the test data, providing initial insights into its predictive capabilities.
+
+8.2 Improved Decision Tree Model with ROSE:
+
+* Addressing Class Imbalance with ROSE: To enhance the model's performance, especially in the context of class imbalance, we employed the ROSE (Random Over Sampling Examples) technique. This approach balanced the dataset by oversampling the minority class and undersampling the majority class, creating a more representative training dataset (balancedData).
+* Model Training on Balanced Data: The improved model (fitBalanced) was then trained on this balanced dataset.
+* Model Evaluation: Similar to the basic model, the performance of the improved model was assessed on the same test data, allowing for a direct comparison between the two models.
+```{r Decision Tree}
+library(rpart)
+library(rpart.plot)
+
+# Building the decision tree model
+decisionTreeModel <- rpart(Heart_Disease ~ ., data = df, method = "class")
+
+```
+
+
+```{r splitting and training}
+# Splitting the data
+set.seed(123)  # For reproducibility
+trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
+trainData <- df[trainIndex,]
+testData <- df[-trainIndex,]
+
+fit <- rpart(Heart_Disease ~ ., data = trainData, method = "class", 
+             control = rpart.control(cp = 0.001, minsplit = 20))
+
+# Predict on the test data
+predictions <- predict(fit, testData, type = "class")
+
+# Evaluating the model
+confusionMatrix(predictions, testData$Heart_Disease)
+```
+```{r ROSE}
+# Balance the dataset using ROSE
+balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
+
+# Fit the model on the balanced training data
+fitBalanced <- rpart(Heart_Disease ~ ., data = balancedData, method = "class")
+
+# Predict on the test data
+predictionsBalanced <- predict(fitBalanced, testData, type = "class")
+
+# Evaluate the model directly with the predictions
+confusionMatrix(predictionsBalanced, testData$Heart_Disease)
+
+```
+# 9. Comprehensive Comparison of Basic and Improved Decision Tree Models:
+
+9.1 Model Performance Metrics:
+
+* Accuracy: The basic model exhibited a high accuracy of 0.9191, which, though seemingly impressive, was primarily due to its bias towards the majority class. The improved model, with an accuracy of 0.7161, reflects a more genuine performance across both classes.
+* Sensitivity and Specificity: The basic model's sensitivity (1.00) and specificity (0.00) underscore its one-sided predictive nature. In contrast, the improved model achieved a sensitivity of 0.7118 and specificity of 0.7641, indicating a more balanced approach in predicting both classes.
+* Positive and Negative Predictive Values: The basic model’s high PPV (0.9191) was overshadowed by its inability to predict the minority class accurately. The improved model maintained a high PPV (0.9717) while also showing a modest NPV (0.1892), though there's room for improvement in predicting the positive class more accurately.
+
+9.2 Impact of Class Imbalance:
+
+* Basic Model: Its metrics were skewed due to the overwhelming presence of the majority class in the dataset. This led to a high number of false negatives, as the model predominantly predicted the 'No' class.
+* Improved Model: Utilizing the ROSE technique to balance the dataset, the improved model provided a more accurate reflection of its predictive capabilities, ensuring that both classes were represented more equally in the training process.
+
+9.3 Reliability and Agreement:
+
+* Kappa Statistic: The basic model’s kappa value of 0 indicated no agreement beyond random chance, despite its high accuracy. The improved model, with a kappa of 0.1995, showed a slight but significant improvement, indicating that its predictions were more than just random chance.
+* McNemar’s Test: This test further affirmed the significant difference in the model's error rates for the two classes, especially in the improved model.
+
+9.4 F1 Score - Harmonic Mean of Precision and Recall:
+
+* The F1 Score was not a relevant metric for the basic model due to its skewed predictions. However, for the improved model, the F1 Score of approximately 0.8211 signified a well-balanced trade-off between precision and recall, making it a more reliable indicator of model performance in imbalanced datasets.
+
+10. Concluding Remarks:
+This comparative analysis underscores the pitfalls of ignoring class imbalance in predictive modeling, particularly in medical diagnostic contexts. The basic decision tree model, while displaying high accuracy, failed to provide meaningful predictive insights. The application of the ROSE technique in the improved model marked a significant step towards more balanced and realistic predictions.
