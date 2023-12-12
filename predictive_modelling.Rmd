@@ -3,9 +3,11 @@ title: "Decoding Heart Disease: An In-depth Analysis and Predictive Modeling App
 author: "Parameshwar Bhat, Charan Reddy Kumar, Sailesh Baabu Suresh Babu, Ram Mannuru"
 date: "10 December, 2023"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     code_folding: hide
-    number_sections: false
+    number_sections: no
     toc: yes
     toc_float: yes
 ---
@@ -26,7 +28,17 @@ d. Our mission is not just about predicting who might get heart disease but unde
 
 We're moving from exploring data to building something practical – a model that not only forecasts but also teaches us more about heart health and how we can take better care of ourselves. So, buckle up for this leg of our journey!
 
-```{R}
+```{R, echo = FALSE}
+suppressPackageStartupMessages(library(ROSE))
+suppressPackageStartupMessages(library(pROC))
+suppressPackageStartupMessages(library(caret))
+suppressPackageStartupMessages(library(knitr))
+suppressPackageStartupMessages(library(glmnet))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(xgboost))
+suppressPackageStartupMessages(library(randomForest))
+suppressPackageStartupMessages(library(rpart))
+suppressPackageStartupMessages(library(rpart.plot))
 library(ROSE)
 library(pROC)
 library(caret)
@@ -34,11 +46,13 @@ library(knitr)
 library(glmnet)
 library(ggplot2)
 library(xgboost)
-
+library(randomForest)
+library(rpart)
+library(rpart.plot)
 ```
 
 
-```{R}
+```{R, echo = FALSE}
 data = read.csv('CVD.csv')
 data$Exercise <- ifelse(data$Exercise == 'No', 0, 1)
 data$Heart_Disease <- ifelse(data$Heart_Disease == 'No', 0, 1)
@@ -80,7 +94,7 @@ data$Diabetes <- ifelse(data$Diabetes == 'No', 0,
                                       ifelse(data$Diabetes == 'Yes, but female told only during pregnancy', 2, NA))))
 ```
 
-```{R}
+```{R, echo = FALSE}
 # Split the data into training and testing sets
 set.seed(42)  # for reproducibility
 train_indices <- sample(1:nrow(data), 0.8 * nrow(data))
@@ -103,10 +117,7 @@ test_predictions <- predict(logistic_model, newdata = test_data_before_upsamplin
 test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
 test_accuracy <- mean(test_predicted_classes == test_data_before_upsampling$Heart_Disease)
 
-cat("Train Accuracy :", train_accuracy, ", Test Accuracy :", test_accuracy, "\n")
-
 confusion_matrix <- table(test_predicted_classes, test_data_before_upsampling$Heart_Disease)
-cat("Confusion Matrix:\n", confusion_matrix, "\n")
 ```
 
 # 2. Logistic Regression with All Features:
@@ -121,11 +132,12 @@ c. Challenges Identified:
 d. Possible Reasons:
 * Imbalanced Data: The highly imbalanced positive-to-negative ratio might have led the model to prioritize overall accuracy at the expense of recall.
 
-```{R}
+```{R, echo = FALSE}
 accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
 precision <- confusion_matrix[2, 2] / sum(confusion_matrix[2,])
 recall <- confusion_matrix[2, 2] / sum(confusion_matrix[,2])
 f1_score <- 2 * precision * recall / (precision + recall)
+print(confusion_matrix)
 cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
 ```
 
@@ -133,7 +145,7 @@ cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_sc
 
 To address the Imbalance in the dataset, Synthetic Minority Over-sampling Technique (SMOTE) was employed.
 
-```{R}
+```{R, echo = FALSE}
 X <- data[, c("Exercise", "Skin_Cancer", "Other_Cancer", "Depression", "Arthritis", "Smoking_History", "Checkup", "General_Health", "Sex", "Age_Category", "Diabetes")]
 y <- data$Heart_Disease
 ros_obj <- ROSE(Heart_Disease ~ ., data = data, seed = 42, p = 0.5, N = length(y))
@@ -153,19 +165,17 @@ test_predictions <- predict(logistic_model, newdata = test_data_after_upsampling
 test_predicted_classes <- ifelse(test_predictions > 0.5, 1, 0)
 test_accuracy <- mean(test_predicted_classes == test_data_after_upsampling$Heart_Disease)
 
-cat("Train Accuracy :", train_accuracy, ", Test Accuracy :", test_accuracy, "\n")
 conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = test_predicted_classes)
-print("Confusion Matrix:")
-print(conf_matrix)
 ```
 
-```{R}
+```{R, echo = FALSE}
 tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 1)
 fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & test_predicted_classes == 1)
 fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 0)
 precision <- tp / (tp + fp)
 recall <- tp / (tp + fn)
 f1_score <- 2 * (precision * recall) / (precision + recall)
+print(conf_matrix)
 cat("Accuracy :", test_accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
 ```
 
@@ -199,7 +209,7 @@ e. Possible Reasons for increase in performance metrics:
 
 In addition to the quantitative evaluation metrics, a visual representation of feature importance was generated from the logistic regression model coefficients. This plot aimed to provide a clear understanding of the contribution of each feature to the prediction of heart disease.
 
-```{R}
+```{R, echo = FALSE}
 coefficients <- coef(logistic_model)[-1]
 feature_names <- names(coefficients)
 
@@ -226,7 +236,7 @@ Feature Importance Plot: The plot showcases the absolute values of the logistic 
 
 Top Features: Features such as 'Arthritis,' 'General_Health,' 'Age_Category,' 'Smoking_History,' 'Sex' emerged as prominent contributors to the model, whereas features we thought would be more prominent such as 'Height, ' 'Weight, ' 'Alcohol consumption' turned out to be least significant.
 
-```{r, results='asis'}
+```{r, results='asis', echo = FALSE}
 my_data <- data.frame(
   Feature = c("Age_Category", "Diabetes", "Smoking_History", "BMI", "General Health", "Weight_kg", "Height_cm", "Exercise", "Arthritis", "Sex", "Other_Cancer"),
   Correlation = c("Positive", "Positive", "Positive", "Positive", "Positive", "Positive", "Negative", "Negative", "Negative", "Negative", "Negative"),
@@ -237,7 +247,7 @@ kable(my_data, caption = "FEATURE IMPORTANCE TABLE", format = "html", align = "c
 
 # 5. Logistic Regression with Upsampling + Statistically Significant Features:
 
-```{R}
+```{R, echo = FALSE}
 logistic_model <- glm(Heart_Disease ~ General_Health + Arthritis + Sex + Age_Category + Smoking_History, data = train_data_after_upsampling, family = binomial)
 
 y_pred_prob <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
@@ -245,18 +255,16 @@ y_pred <- ifelse(y_pred_prob >= 0.5, 1, 0)
 
 accuracy <- sum(y_pred == test_data_after_upsampling$Heart_Disease) / length(test_data_after_upsampling$Heart_Disease)
 conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = y_pred)
-
-print("Confusion Matrix:")
-print(conf_matrix)
 ```
 
-```{R}
+```{R, echo = FALSE}
 tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 1)
 fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & y_pred == 1)
 fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 0)
 precision <- tp / (tp + fp)
 recall <- tp / (tp + fn)
 f1_score <- 2 * (precision * recall) / (precision + recall)
+print(conf_matrix)
 cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "\n")
 ```
 
@@ -278,7 +286,7 @@ Possible Reasons:
 
 # 6. Hyperparameter Tuning:
 
-```{R}
+```{R, echo = FALSE}
 X_train <- as.matrix(train_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
 y_train <- train_data_after_upsampling$Heart_Disease
 
@@ -344,7 +352,7 @@ d. Possible Reasons:
 The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial model showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
 
 
-```{r preprocessing for Decision Tree}
+```{R, echo = FALSE}
 df = read.csv('CVD.csv')
 df$Sex <- factor(df$Sex)
 
@@ -384,32 +392,32 @@ dfDuplicate <- sum(duplicated(df))
 df <- unique(df)
 ```
 
-# 8.Development of Decision Tree Models for Heart Disease Prediction
+# 8.Development of Decision Tree Models for Heart Disease Prediction:
 
 In our study, we developed two variants of decision tree models to predict the occurrence of heart disease. Decision trees are a type of supervised learning algorithm that are widely used for classification tasks due to their interpretability and simplicity.
 
 8.1 Basic Decision Tree Model:
 
-* Model Building: The basic model was constructed using the rpart package in R. This model (decisionTreeModel) was trained on the entire dataset (df) with Heart_Disease as the target variable.
-* Data Splitting and Training: The dataset was split into training (80%) and testing (20%) sets, ensuring reproducibility with set.seed(123). The model (fit) was then trained on the training data using the rpart function with specific control parameters (cp = 0.001, minsplit = 20), aimed at refining the model's complexity and sensitivity to data splits.
-* Model Evaluation: The performance of the model was evaluated on the test data, providing initial insights into its predictive capabilities.
+a. Model Building: The basic model was constructed using the rpart package in R. This model (decisionTreeModel) was trained on the entire dataset (df) with Heart_Disease as the target variable.
+
+b. Data Splitting and Training: The dataset was split into training (80%) and testing (20%) sets, ensuring reproducibility with set.seed(123). The model (fit) was then trained on the training data using the rpart function with specific control parameters (cp = 0.001, minsplit = 20), aimed at refining the model's complexity and sensitivity to data splits.
+
+c. Model Evaluation: The performance of the model was evaluated on the test data, providing initial insights into its predictive capabilities.
 
 8.2 Improved Decision Tree Model with ROSE:
 
-* Addressing Class Imbalance with ROSE: To enhance the model's performance, especially in the context of class imbalance, we employed the ROSE (Random Over Sampling Examples) technique. This approach balanced the dataset by oversampling the minority class and undersampling the majority class, creating a more representative training dataset (balancedData).
-* Model Training on Balanced Data: The improved model (fitBalanced) was then trained on this balanced dataset.
-* Model Evaluation: Similar to the basic model, the performance of the improved model was assessed on the same test data, allowing for a direct comparison between the two models.
-```{r Decision Tree}
-library(rpart)
-library(rpart.plot)
+a. Addressing Class Imbalance with ROSE: To enhance the model's performance, especially in the context of class imbalance, we employed the ROSE (Random Over Sampling Examples) technique. This approach balanced the dataset by oversampling the minority class and undersampling the majority class, creating a more representative training dataset (balancedData).
 
-# Building the decision tree model
+b. Model Training on Balanced Data: The improved model (fitBalanced) was then trained on this balanced dataset.
+
+c. Model Evaluation: Similar to the basic model, the performance of the improved model was assessed on the same test data, allowing for a direct comparison between the two models.
+
+```{R, echo = FALSE}
 decisionTreeModel <- rpart(Heart_Disease ~ ., data = df, method = "class")
-
 ```
 
 
-```{r splitting and training}
+```{R, echo = FALSE}
 # Splitting the data
 set.seed(123)  # For reproducibility
 trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
@@ -425,7 +433,7 @@ predictions <- predict(fit, testData, type = "class")
 # Evaluating the model
 confusionMatrix(predictions, testData$Heart_Disease)
 ```
-```{r ROSE}
+```{R, echo = FALSE}
 # Balance the dataset using ROSE
 balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
 
@@ -444,28 +452,34 @@ confusionMatrix(predictionsBalanced, testData$Heart_Disease)
 9.1 Model Performance Metrics:
 
 * Accuracy: The basic model exhibited a high accuracy of 0.9191, which, though seemingly impressive, was primarily due to its bias towards the majority class. The improved model, with an accuracy of 0.7161, reflects a more genuine performance across both classes.
+
 * Sensitivity and Specificity: The basic model's sensitivity (1.00) and specificity (0.00) underscore its one-sided predictive nature. In contrast, the improved model achieved a sensitivity of 0.7118 and specificity of 0.7641, indicating a more balanced approach in predicting both classes.
+
 * Positive and Negative Predictive Values: The basic model’s high PPV (0.9191) was overshadowed by its inability to predict the minority class accurately. The improved model maintained a high PPV (0.9717) while also showing a modest NPV (0.1892), though there's room for improvement in predicting the positive class more accurately.
 
 9.2 Impact of Class Imbalance:
 
-* Basic Model: Its metrics were skewed due to the overwhelming presence of the majority class in the dataset. This led to a high number of false negatives, as the model predominantly predicted the 'No' class.
-* Improved Model: Utilizing the ROSE technique to balance the dataset, the improved model provided a more accurate reflection of its predictive capabilities, ensuring that both classes were represented more equally in the training process.
+a. Basic Model: Its metrics were skewed due to the overwhelming presence of the majority class in the dataset. This led to a high number of false negatives, as the model predominantly predicted the 'No' class.
+
+b. Improved Model: Utilizing the ROSE technique to balance the dataset, the improved model provided a more accurate reflection of its predictive capabilities, ensuring that both classes were represented more equally in the training process.
 
 9.3 Reliability and Agreement:
 
-* Kappa Statistic: The basic model’s kappa value of 0 indicated no agreement beyond random chance, despite its high accuracy. The improved model, with a kappa of 0.1995, showed a slight but significant improvement, indicating that its predictions were more than just random chance.
-* McNemar’s Test: This test further affirmed the significant difference in the model's error rates for the two classes, especially in the improved model.
+a. Kappa Statistic: The basic model’s kappa value of 0 indicated no agreement beyond random chance, despite its high accuracy. The improved model, with a kappa of 0.1995, showed a slight but significant improvement, indicating that its predictions were more than just random chance.
+
+b. McNemar’s Test: This test further affirmed the significant difference in the model's error rates for the two classes, especially in the improved model.
 
 9.4 F1 Score - Harmonic Mean of Precision and Recall:
 
 * The F1 Score was not a relevant metric for the basic model due to its skewed predictions. However, for the improved model, the F1 Score of approximately 0.8211 signified a well-balanced trade-off between precision and recall, making it a more reliable indicator of model performance in imbalanced datasets.
 
 10. Concluding Remarks:
+
 This comparative analysis underscores the pitfalls of ignoring class imbalance in predictive modeling, particularly in medical diagnostic contexts. The basic decision tree model, while displaying high accuracy, failed to provide meaningful predictive insights. The application of the ROSE technique in the improved model marked a significant step towards more balanced and realistic predictions.
 
-# 10. XgBoost Model
-```{R}
+# 10. XgBoost Model:
+
+```{R, echo = FALSE}
 
 # Selecting specific variables
 selected_vars <- c('Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 
@@ -481,11 +495,14 @@ trainData <- df_selected[split, ]
 testData <- df_selected[-split, ]
 
 ```
-**This R script is focused on data preparation for a machine learning model predicting heart disease. Initially, it narrows down the dataset df to select pertinent variables: 'Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 'Smoking_History', 'BMI', 'Green_Vegetables_Consumption', 'FriedPotato_Consumption', and 'Heart_Disease'. This refined dataset, df_selected, is then split into training and testing sets, using the createDataPartition function with a set seed for reproducibility. Specifically, 80% of the data is allocated for training (trainData) and the remaining 20% for testing (testData), based on the 'Heart_Disease' variable.**
-```{R}
 
-library(caret)
+Introduction to XGBoost Model:
 
+In the quest for accurate heart disease prediction, this script extends its focus to the formidable XGBoost algorithm. After meticulous feature selection, the dataset, now named df_selected, is curated with vital attributes like 'Depression,' 'Diabetes,' and 'BMI.' XGBoost, renowned for its predictive prowess, employs boosted decision trees to unravel complex patterns, making it an ideal candidate for our task.
+
+With the selected features in tow, the script splits the data into training (80%) and testing (20%) sets. The ensuing sections will unravel the intricacies of training the XGBoost model, evaluating its performance, and extracting valuable insights for enhanced heart disease prediction.
+
+```{R, echo = FALSE}
 # Apply one-hot encoding for XGBoost
 dummies <- dummyVars(" ~ .", data = df)
 df_xgb <- predict(dummies, newdata = df)
@@ -537,7 +554,8 @@ xgb_model <- xgb.train(
   data = dtrain,
   nrounds = 100,
   watchlist = list(eval = dtest, train = dtrain),
-  early_stopping_rounds = 10
+  early_stopping_rounds = 10,
+  verbose = FALSE
 )
 
 # Predict on test data
@@ -546,26 +564,26 @@ xgb_predicted_labels <- ifelse(xgb_predictions > 0.5, 1, 0)
 
 # Evaluate model performance
 confusionMatrix(factor(xgb_predicted_labels, levels = c(0, 1)), factor(as.numeric(testData$Heart_Disease) - 1, levels = c(0, 1)))
-
-
 ```
-**Interpretation:**
-**Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.**
 
-**Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.**
+Interpretation:
 
-**High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.**
+a. Class Imbalance Impact: The high prevalence rate (0.91915) suggests a highly imbalanced dataset. This imbalance is reflected in the high accuracy but low balanced accuracy, indicating the model is biased towards the majority class.
 
-**Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.**
+b. Poor Specificity: The model struggles to correctly identify positive instances of heart disease, which is a critical issue for a medical diagnostic tool.
 
-**Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.**
+c. High Sensitivity but Low Specificity: This indicates the model is excellent at identifying 'No Heart Disease' cases but not 'Heart Disease' cases.
+
+d. Kappa Statistic: The very low kappa score suggests that the agreement between the predicted and actual values is minimal, mostly due to chance.
+
+e. Positive Predictive Value and Negative Predictive Value: Both are low, indicating a high rate of false positives and false negatives.
 
 
+# 11. Random Forests :
 
-```{r}
+Employing Random Forest post-EDA not only validates initial findings but also reveals nuanced interactions and nonlinear dependencies often missed by traditional statistical methods. The algorithm's prowess in handling diverse variables and highlighting feature importance seamlessly aligns with the goal of pinpointing critical factors influencing health. In essence, this combination forms a robust framework, enhancing our ability to predict, identify key lifestyle factors, and ultimately mitigate health risks.
 
-library(randomForest)
-library(pROC)
+```{R, echo = FALSE}
 your_data<- read.csv("CVD.csv")
 
 set.seed(123)
@@ -606,13 +624,36 @@ precision <- conf_matrix[2, 2] / sum(conf_matrix[, 2])
 recall <- conf_matrix[2, 2] / sum(conf_matrix[2, ])
 f1_score <- 2 * precision * recall / (precision + recall)
 
-cat("Precision: ", precision, "\n")
-cat("Recall: ", recall, "\n")
-cat("F1 Score: ", f1_score, "\n")
-cat("Accuracy: ", accuracy, "\n")
-cat("Sensitivity: ", sensitivity, "\n")
-cat("Specificity: ", specificity, "\n")
-cat("Positive Predictive Value: ", positive_predictive_value, "\n")
-cat("Negative Predictive Value: ", negative_predictive_value, "\n")
-
+cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_score :", f1_score, "Sensitivity :", sensitivity, "Specificity :", specificity, "Positive Predictive Value :", positive_predictive_value, "Negative Predictive Value :", negative_predictive_value,"\n")
 ```
+
+Key Observations:
+
+a. The model has high accuracy (91.95%), indicating it correctly predicts the overall class of 'Heart_Disease' in the majority of cases.
+
+b. The sensitivity (recall) is 44.83%, suggesting that the model identifies true positive cases (actual 'Yes') at a moderate rate.
+
+c. The specificity is high (91.98%), indicating the model performs well in identifying true negative cases (actual 'No').
+
+d. The positive predictive value (precision) is low (0.35%), indicating a low proportion of predicted 'Yes' cases are actually true positives.
+
+e. The negative predictive value is very high (99.96%), indicating a high proportion of predicted 'No' cases are actually true negatives.
+
+# 12. Conclusions :
+
+Each model has strengths and weaknesses:
+
+a. Decision Tree: Balanced accuracy but a tendency to miss negative cases (low NPV).
+
+b. Random Forest: High overall accuracy and specificity but poor at predicting positive cases (low PPV).
+
+c. XGBoost: Excellent at identifying positive cases but many false positives (low specificity).
+
+d. Logistic Regression: Provides a balanced approach with reasonable precision and recall.
+
+The choice of the best model depends on the specific requirements of your heart disease prediction task. 
+If minimizing false negatives (missing heart disease cases) is crucial, XGBoost might be preferred despite its high false positive rate. For a more balanced approach, Logistic Regression could be a better choice. 
+If the focus is on overall accuracy and specificity, Random Forest may be suitable, although it struggles with detecting positive cases effectively. Decision Tree offers a middle ground in terms of balanced accuracy. 
+The decision should be based on the relative costs of false positives and false negatives in the context of heart disease prediction.
+
+This comprehensive approach to modeling heart disease leveraged logistic regression,decision trees, random forests, xgboost, upsampling techniques, and hyperparameter tuning. The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial models showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
