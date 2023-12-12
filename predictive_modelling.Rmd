@@ -28,7 +28,7 @@ d. Our mission is not just about predicting who might get heart disease but unde
 
 We're moving from exploring data to building something practical – a model that not only forecasts but also teaches us more about heart health and how we can take better care of ourselves. So, buckle up for this leg of our journey!
 
-```{R}
+```{R, echo = FALSE}
 suppressPackageStartupMessages(library(ROSE))
 suppressPackageStartupMessages(library(pROC))
 suppressPackageStartupMessages(library(caret))
@@ -52,7 +52,7 @@ library(rpart.plot)
 ```
 
 
-```{R}
+```{R, echo = FALSE}
 data = read.csv('CVD.csv')
 data$Exercise <- ifelse(data$Exercise == 'No', 0, 1)
 data$Heart_Disease <- ifelse(data$Heart_Disease == 'No', 0, 1)
@@ -94,7 +94,7 @@ data$Diabetes <- ifelse(data$Diabetes == 'No', 0,
                                       ifelse(data$Diabetes == 'Yes, but female told only during pregnancy', 2, NA))))
 ```
 
-```{R}
+```{R, echo = FALSE}
 # Split the data into training and testing sets
 set.seed(42)  # for reproducibility
 train_indices <- sample(1:nrow(data), 0.8 * nrow(data))
@@ -132,7 +132,7 @@ c. Challenges Identified:
 d. Possible Reasons:
 * Imbalanced Data: The highly imbalanced positive-to-negative ratio might have led the model to prioritize overall accuracy at the expense of recall.
 
-```{R}
+```{R, echo = FALSE}
 accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
 precision <- confusion_matrix[2, 2] / sum(confusion_matrix[2,])
 recall <- confusion_matrix[2, 2] / sum(confusion_matrix[,2])
@@ -145,7 +145,7 @@ cat("Accuracy :", accuracy, "precision :", precision, "recall :", recall, "f1_sc
 
 To address the Imbalance in the dataset, Synthetic Minority Over-sampling Technique (SMOTE) was employed.
 
-```{R}
+```{R, echo = FALSE}
 X <- data[, c("Exercise", "Skin_Cancer", "Other_Cancer", "Depression", "Arthritis", "Smoking_History", "Checkup", "General_Health", "Sex", "Age_Category", "Diabetes")]
 y <- data$Heart_Disease
 ros_obj <- ROSE(Heart_Disease ~ ., data = data, seed = 42, p = 0.5, N = length(y))
@@ -168,7 +168,7 @@ test_accuracy <- mean(test_predicted_classes == test_data_after_upsampling$Heart
 conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = test_predicted_classes)
 ```
 
-```{R}
+```{R, echo = FALSE}
 tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 1)
 fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & test_predicted_classes == 1)
 fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & test_predicted_classes == 0)
@@ -209,7 +209,7 @@ e. Possible Reasons for increase in performance metrics:
 
 In addition to the quantitative evaluation metrics, a visual representation of feature importance was generated from the logistic regression model coefficients. This plot aimed to provide a clear understanding of the contribution of each feature to the prediction of heart disease.
 
-```{R}
+```{R, echo = FALSE}
 coefficients <- coef(logistic_model)[-1]
 feature_names <- names(coefficients)
 
@@ -236,7 +236,7 @@ Feature Importance Plot: The plot showcases the absolute values of the logistic 
 
 Top Features: Features such as 'Arthritis,' 'General_Health,' 'Age_Category,' 'Smoking_History,' 'Sex' emerged as prominent contributors to the model, whereas features we thought would be more prominent such as 'Height, ' 'Weight, ' 'Alcohol consumption' turned out to be least significant.
 
-```{r, results='asis'}
+```{r, results='asis', echo = FALSE}
 my_data <- data.frame(
   Feature = c("Age_Category", "Diabetes", "Smoking_History", "BMI", "General Health", "Weight_kg", "Height_cm", "Exercise", "Arthritis", "Sex", "Other_Cancer"),
   Correlation = c("Positive", "Positive", "Positive", "Positive", "Positive", "Positive", "Negative", "Negative", "Negative", "Negative", "Negative"),
@@ -247,7 +247,7 @@ kable(my_data, caption = "FEATURE IMPORTANCE TABLE", format = "html", align = "c
 
 # 5. Logistic Regression with Upsampling + Statistically Significant Features:
 
-```{R}
+```{R, echo = FALSE}
 logistic_model <- glm(Heart_Disease ~ General_Health + Arthritis + Sex + Age_Category + Smoking_History, data = train_data_after_upsampling, family = binomial)
 
 y_pred_prob <- predict(logistic_model, newdata = test_data_after_upsampling, type = "response")
@@ -257,7 +257,7 @@ accuracy <- sum(y_pred == test_data_after_upsampling$Heart_Disease) / length(tes
 conf_matrix <- table(Actual = test_data_after_upsampling$Heart_Disease, Predicted = y_pred)
 ```
 
-```{R}
+```{R, echo = FALSE}
 tp <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 1)
 fp <- sum(test_data_after_upsampling$Heart_Disease == 0 & y_pred == 1)
 fn <- sum(test_data_after_upsampling$Heart_Disease == 1 & y_pred == 0)
@@ -286,7 +286,7 @@ Possible Reasons:
 
 # 6. Hyperparameter Tuning:
 
-```{R}
+```{R, echo = FALSE}
 X_train <- as.matrix(train_data_after_upsampling[, c("General_Health", "Arthritis", "Sex", "Age_Category", "Smoking_History")])
 y_train <- train_data_after_upsampling$Heart_Disease
 
@@ -352,7 +352,7 @@ d. Possible Reasons:
 The results demonstrated the significance of a thoughtful and iterative modeling process. While the initial model showcased high accuracy, addressing the recall limitation through upsampling, feature selection, and hyperparameter tuning unveiled a more nuanced understanding of the predictive factors.
 
 
-```{r preprocessing for Decision Tree}
+```{R, echo = FALSE}
 df = read.csv('CVD.csv')
 df$Sex <- factor(df$Sex)
 
@@ -412,12 +412,12 @@ b. Model Training on Balanced Data: The improved model (fitBalanced) was then tr
 
 c. Model Evaluation: Similar to the basic model, the performance of the improved model was assessed on the same test data, allowing for a direct comparison between the two models.
 
-```{r Decision Tree}
+```{R, echo = FALSE}
 decisionTreeModel <- rpart(Heart_Disease ~ ., data = df, method = "class")
 ```
 
 
-```{r splitting and training}
+```{R, echo = FALSE}
 # Splitting the data
 set.seed(123)  # For reproducibility
 trainIndex <- createDataPartition(df$Heart_Disease, p = .80, list = FALSE, times = 1)
@@ -433,7 +433,7 @@ predictions <- predict(fit, testData, type = "class")
 # Evaluating the model
 confusionMatrix(predictions, testData$Heart_Disease)
 ```
-```{r ROSE}
+```{R, echo = FALSE}
 # Balance the dataset using ROSE
 balancedData <- ROSE(Heart_Disease ~ ., data = trainData)$data
 
@@ -479,7 +479,7 @@ This comparative analysis underscores the pitfalls of ignoring class imbalance i
 
 # 10. XgBoost Model:
 
-```{R}
+```{R, echo = FALSE}
 
 # Selecting specific variables
 selected_vars <- c('Depression', 'Diabetes', 'Arthritis', 'Sex', 'Age_Category', 
@@ -502,7 +502,7 @@ In the quest for accurate heart disease prediction, this script extends its focu
 
 With the selected features in tow, the script splits the data into training (80%) and testing (20%) sets. The ensuing sections will unravel the intricacies of training the XGBoost model, evaluating its performance, and extracting valuable insights for enhanced heart disease prediction.
 
-```{R}
+```{R, echo = FALSE}
 # Apply one-hot encoding for XGBoost
 dummies <- dummyVars(" ~ .", data = df)
 df_xgb <- predict(dummies, newdata = df)
@@ -583,7 +583,7 @@ e. Positive Predictive Value and Negative Predictive Value: Both are low, indica
 
 Employing Random Forest post-EDA not only validates initial findings but also reveals nuanced interactions and nonlinear dependencies often missed by traditional statistical methods. The algorithm's prowess in handling diverse variables and highlighting feature importance seamlessly aligns with the goal of pinpointing critical factors influencing health. In essence, this combination forms a robust framework, enhancing our ability to predict, identify key lifestyle factors, and ultimately mitigate health risks.
 
-```{r}
+```{R, echo = FALSE}
 your_data<- read.csv("CVD.csv")
 
 set.seed(123)
